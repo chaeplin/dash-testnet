@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 import io
 import os
@@ -81,11 +81,11 @@ zmqSubSocket.connect("tcp://%s:%i" % (rpcbind, int(zmqport)))
 try:
     while True:
         msg = zmqSubSocket.recv_multipart()
-        topic = str(msg[0])
-        body = msg[1]
+        topic = str(msg[0].decode("utf-8"))
+        body  = str(binascii.hexlify(msg[1]).decode("utf-8"))
 
         if topic == "hashblock":
-            rpcgetblock(binascii.hexlify(body))
+            rpcgetblock(body)
 
 except KeyboardInterrupt:
     zmqContext.destroy()
