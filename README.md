@@ -1,3 +1,3 @@
-scripts for dash testnt
+scripts for dash testnet
 =======================
 
