@@ -69,7 +69,15 @@ def rpcgetinfo():
 
     except:
         pass
-        
+
+    try:
+        spork = access.spork('show')
+        if spork:
+            streamer.log_object(spork, key_prefix=iss_prefix + '_spork')
+
+    except:
+        pass
+                
     cpu_percents = psutil.cpu_percent(percpu=True)
     streamer.log_object(cpu_percents, key_prefix=iss_prefix + '_cpu')
 
