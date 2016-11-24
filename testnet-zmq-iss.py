@@ -46,9 +46,13 @@ def rpcgetinfo():
 
         if len(getinfo) > 0:
             bucket = {}
-            bucket['blocks'] = getinfo['blocks']
-            bucket['diff']   = json.dumps(getinfo['difficulty'])
-            bucket['conns']  = getinfo['connections']
+            bucket['blocks']      = getinfo['blocks']
+            bucket['diff']        = json.dumps(getinfo['difficulty'])
+            bucket['conns']       = getinfo['connections']
+            bucket['tstamp']      = int(time.time())
+            bucket['balance']     = json.dumps(getinfo['balance'])
+            bucket['keypoolsize'] = getinfo['keypoolsize']
+            bucket['protocolversion'] = getinfo['protocolversion']
             streamer.log_object(bucket, key_prefix=iss_prefix)
 
     except:
@@ -106,6 +110,8 @@ zmqSubSocket.connect("tcp://%s:%i" % (rpcbindip, zmqport))
 # iss
 streamer = Streamer(bucket_name=iss_bucket_name, bucket_key=iss_bucket_key, access_key=iss_access_key, buffer_size=100)
 
+current_sequence = 0
+
 # main
 try:
     while True:
@@ -119,7 +125,15 @@ try:
           sequence = str(msgSequence)
 
         if topic == "hashblock":
-            rpcgetinfo()
+            if sequence != "Unknown" and int(sequence) >= current_sequence:
+                rpcgetinfo()
+                current_sequence = int(sequence)
+
+            elif int(sequence) < current_sequence:
+                while(not checksynced()):
+                    print('x')
+                    time.sleep(30)
+                current_sequence = 0
 
 except Exception as e:
     print(e.args[0])
