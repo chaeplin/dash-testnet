@@ -11,6 +11,7 @@ import binascii
 import struct
 import psutil
 import re
+import subprocess
 from bitcoinrpc.authproxy import AuthServiceProxy, JSONRPCException
 from ISStreamer.Streamer import Streamer
 
@@ -40,6 +41,22 @@ def checksynced():
     except:
         return False
 
+def check_version():
+    try:
+        cmd = "/usr/local/bin/dash-cli --version"
+        with subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE).stdout as f:
+            result = f.read().splitlines()
+            match   = re.search('Dash Core RPC client version (.*)$', result[0].decode("utf-8"))
+            if match:
+                version = match.group(1)
+                if version:
+                    return version
+                else:
+                    return None
+
+    except Exception as e:
+        return None
+
 def rpcgetinfo():
     try:
         getinfo = access.getinfo()
@@ -53,6 +70,7 @@ def rpcgetinfo():
             bucket['balance']     = json.dumps(getinfo['balance'])
             bucket['keypoolsize'] = getinfo['keypoolsize']
             bucket['protocolversion'] = getinfo['protocolversion']
+            bucket['version']         = check_version()
             streamer.log_object(bucket, key_prefix=iss_prefix)
 
     except:
