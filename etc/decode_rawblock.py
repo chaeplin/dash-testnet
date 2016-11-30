@@ -22,8 +22,6 @@ code_strings = {
     256: ''.join([chr(x) for x in range(256)])
 }
 
-_bchr = chr
-_bord = ord
 long = int
 _bchr = lambda x: bytes([x])
 _bord = lambda x: x

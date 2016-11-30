@@ -6,12 +6,9 @@
 import hashlib
 from bitcoin import *
 
-_bchr = chr
-_bord = ord
-if sys.version > '3':
-    long = int
-    _bchr = lambda x: bytes([x])
-    _bord = lambda x: x
+long = int
+_bchr = lambda x: bytes([x])
+_bord = lambda x: x
 
 
 #{
