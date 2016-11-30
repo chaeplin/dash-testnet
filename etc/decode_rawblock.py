@@ -7,8 +7,29 @@ import binascii
 from datetime import datetime
 import x11_hash
 import sys
+import re
+
+string_types = (str)
+string_or_bytes_types = (str, bytes)
+int_types = (int, float)
+
+code_strings = {
+    2: '01',
+    10: '0123456789',
+    16: '0123456789abcdef',
+    32: 'abcdefghijklmnopqrstuvwxyz234567',
+    58: '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz',
+    256: ''.join([chr(x) for x in range(256)])
+}
+
+_bchr = chr
+_bord = ord
+long = int
+_bchr = lambda x: bytes([x])
+_bord = lambda x: x
 
 def calc_difficulty(nBits):
+    """Calculate difficulty from nBits target"""
     nShift = (nBits >> 24) & 0xff
     dDiff = float(0x0000ffff) / float(nBits & 0x00ffffff)
     while nShift < 29:
@@ -88,6 +109,176 @@ def Transactionfromhex(raw_hex):
     _hex = raw_hex[:_size]
     return _size, _hex
 
+def json_changebase(obj, changer):
+    if isinstance(obj, string_or_bytes_types):
+        return changer(obj)
+    elif isinstance(obj, int_types) or obj is None:
+        return obj
+    elif isinstance(obj, list):
+        return [json_changebase(x, changer) for x in obj]
+    return dict((x, json_changebase(obj[x], changer)) for x in obj)
+
+def get_code_string(base):
+    if base in code_strings:
+        return code_strings[base]
+    else:
+        raise ValueError("Invalid base!")
+
+def from_int_to_byte(a):
+    return bytes([a])
+
+def from_byte_to_int(a):
+    return a
+
+def safe_hexlify(a):
+    return str(binascii.hexlify(a), 'utf-8')
+
+def decode(string, base):
+    if base == 256 and isinstance(string, str):
+        string = bytes(bytearray.fromhex(string))
+    base = int(base)
+    code_string = get_code_string(base)
+    result = 0
+    if base == 256:
+        def extract(d, cs):
+            return d
+    else:
+        def extract(d, cs):
+            return cs.find(d if isinstance(d, str) else chr(d))
+
+    if base == 16:
+        string = string.lower()
+    while len(string) > 0:
+        result *= base
+        result += extract(string[0], code_string)
+        string = string[1:]
+    return result
+
+def deserialize(tx):
+    if isinstance(tx, str) and re.match('^[0-9a-fA-F]*$', tx):
+        return json_changebase(deserialize(binascii.unhexlify(tx)),
+                              lambda x: safe_hexlify(x))
+    pos = [0]
+
+    def read_as_int(bytez):
+        pos[0] += bytez
+        return decode(tx[pos[0]-bytez:pos[0]][::-1], 256)
+
+    def read_var_int():
+        pos[0] += 1
+        
+        val = from_byte_to_int(tx[pos[0]-1])
+        if val < 253:
+            return val
+        return read_as_int(pow(2, val - 252))
+
+    def read_bytes(bytez):
+        pos[0] += bytez
+        return tx[pos[0]-bytez:pos[0]]
+
+    def read_var_string():
+        size = read_var_int()
+        return read_bytes(size)
+
+    obj = {"ins": [], "outs": []}
+    obj["version"] = read_as_int(4)
+    ins = read_var_int()
+    for i in range(ins):
+        obj["ins"].append({
+            "outpoint": {
+                "hash": read_bytes(32)[::-1],
+                "index": read_as_int(4)
+            },
+            "script": read_var_string(),
+            "sequence": read_as_int(4)
+        })
+    outs = read_var_int()
+    for i in range(outs):
+        obj["outs"].append({
+            "value": read_as_int(8),
+            "script": read_var_string()
+        })
+    obj["locktime"] = read_as_int(4)
+    return obj
+
+#------
+_base58_codestring = b'123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz'
+_base58_codestring_len = len (_base58_codestring)
+
+def b58encode (x):
+    q = int.from_bytes (x, 'big')
+    result = bytearray ()
+    while q > 0:
+            q, r = divmod (q, _base58_codestring_len)
+            result.append (_base58_codestring[r])
+    for c in x:
+            if c == 0:
+                    result.append (_base58_codestring[0])
+            else:
+                    break
+    result.reverse ()
+    return bytes (result).decode("utf-8")
+
+def scriptSig_decode(pub):
+#    scriptSig = binascii.unhexlify(pub)
+#    h4 = hashlib.new('ripemd160', hashlib.sha256(scriptSig).digest()).digest()
+#    result = _bchr(140) + h4
+#    h6 = hashlib.sha256(hashlib.sha256(result).digest())
+#    result += h6.digest()[0:4]
+#    return b58encode(result)
+
+    scriptSig = binascii.unhexlify(pub)
+    h1 = hashlib.new('ripemd160', hashlib.sha256(scriptSig).digest()).digest()
+    vs = _bchr(140) + h1
+    check = hashlib.sha256(hashlib.sha256(vs).digest()).digest()[0:4]
+    return b58encode(vs + check)
+
+def scriptPubKey_decode(pub):
+    OP_DUP = 0x76
+    OP_HASH160 = 0xa9
+    OP_EQUALVERIFY = 0x88
+    OP_CHECKSIG = 0xac
+
+    scriptPubKey = binascii.unhexlify(pub)
+    if (len(scriptPubKey) == 25
+             and _bord(scriptPubKey[0])  == OP_DUP
+             and _bord(scriptPubKey[1])  == OP_HASH160
+             and _bord(scriptPubKey[2])  == 0x14
+             and _bord(scriptPubKey[23]) == OP_EQUALVERIFY
+             and _bord(scriptPubKey[24]) == OP_CHECKSIG):
+        data = scriptPubKey[3:23]
+        vs = _bchr(140) + data
+        check = hashlib.sha256(hashlib.sha256(vs).digest()).digest()[0:4]
+        return b58encode(vs + check)
+    else:
+        return 'can\'t decode'
+
+def deserialize_script(script):
+    if isinstance(script, str) and re.match('^[0-9a-fA-F]*$', script):
+       return json_changebase(deserialize_script(binascii.unhexlify(script)),
+                              lambda x: safe_hexlify(x))
+    out, pos = [], 0
+    while pos < len(script):
+        code = from_byte_to_int(script[pos])
+        if code == 0:
+            out.append(None)
+            pos += 1
+        elif code <= 75:
+            out.append(script[pos+1:pos+1+code])
+            pos += 1 + code
+        elif code <= 78:
+            szsz = pow(2, code - 76)
+            sz = decode(script[pos+szsz: pos:-1], 256)
+            out.append(script[pos + 1 + szsz:pos + 1 + szsz + sz])
+            pos += 1 + szsz + sz
+        elif code <= 96:
+            out.append(code - 80)
+            pos += 1
+        else:
+            out.append(code)
+            pos += 1
+    return out
+
 #------------
 blockjson = {
   "hash": "00000005df0740c2bb40d9a1dc73c2306116f8a271b99cf33c9348a5dff9aaee",
@@ -128,7 +319,7 @@ rawtx_str[2] = "0100000001d7dae185396113aea49d6773364f554b4680862cffb2424ed027de
 #-----
 print(json.dumps(blockjson, sort_keys=True, indent=4, separators=(',', ': '))) 
 print()
-#print('rawblock_str: ', rawblock_str)
+print('rawblock_str: ', rawblock_str)
 print()
 
 #----
@@ -172,11 +363,31 @@ for i in range(n_transactions):
     rawtx = binascii.hexlify(transaction[1]).decode("utf-8")
     rawtx_hash = format_hash(double_sha256(transaction[1]))
 
-    print('tx no: ', i)
-    print('rawtx_hash: ', rawtx_hash)
-    print('rawtx_h     ', rawtx_h[i])
-    print('rawtx:      ', rawtx)
-    print('rawtx_str:  ', rawtx_str[i])
+    print('tx no: ------------------ ', i+1)
+#    print('rawtx_hash: ', rawtx_hash)
+#    print('rawtx_h     ', rawtx_h[i])
+#    print('rawtx:      ', rawtx)
+#    print('rawtx_str:  ', rawtx_str[i])
+#    print()
+
+    txo = deserialize(rawtx)
+#    print(json.dumps(txo, sort_keys=True, indent=4, separators=(',', ': ')))
+
+    
+    for x in txo.get('ins'):
+        hashin   = x.get('outpoint')['hash']
+        sriptsig = x.get('script')
+        if hashin != '0000000000000000000000000000000000000000000000000000000000000000':
+            des_sriptsig = deserialize_script(sriptsig)
+            pub_key = des_sriptsig[1]
+            addr  = scriptSig_decode(pub_key)
+            print('send:     %s' % addr)
+            
+    for x in txo.get('outs'):
+        script = x.get('script')
+        value  = x.get('value')
+   #     if hashin != '0000000000000000000000000000000000000000000000000000000000000000':
+        value = str('{0:.8f}'.format(float(value / 1e8)))
+        print('recev:    %s, val: %s' % (scriptPubKey_decode(script), value))
+
     print()
-
-
