@@ -193,6 +193,7 @@ def deserialize(tx):
     outs = read_var_int()
     for i in range(outs):
         obj["outs"].append({
+            "n": i,
             "value": read_as_int(8),
             "script": read_var_string()
         })
@@ -218,18 +219,15 @@ def b58encode (x):
     return bytes (result).decode("utf-8")
 
 def scriptSig_decode(pub):
-#    scriptSig = binascii.unhexlify(pub)
-#    h4 = hashlib.new('ripemd160', hashlib.sha256(scriptSig).digest()).digest()
-#    result = _bchr(140) + h4
-#    h6 = hashlib.sha256(hashlib.sha256(result).digest())
-#    result += h6.digest()[0:4]
-#    return b58encode(result)
+    if isinstance(pub, list):
+        if len(pub) == 2 and len(pub[1]) == 66:
+            scriptSig = binascii.unhexlify(pub[1])
+            h1 = hashlib.new('ripemd160', hashlib.sha256(scriptSig).digest()).digest()
+            vs = _bchr(140) + h1
+            check = hashlib.sha256(hashlib.sha256(vs).digest()).digest()[0:4]
+            return b58encode(vs + check)
 
-    scriptSig = binascii.unhexlify(pub)
-    h1 = hashlib.new('ripemd160', hashlib.sha256(scriptSig).digest()).digest()
-    vs = _bchr(140) + h1
-    check = hashlib.sha256(hashlib.sha256(vs).digest()).digest()[0:4]
-    return b58encode(vs + check)
+    return 'coinbase_or_pay_to_pubkey'
 
 def scriptPubKey_decode(pub):
     OP_DUP = 0x76
@@ -248,8 +246,18 @@ def scriptPubKey_decode(pub):
         vs = _bchr(140) + data
         check = hashlib.sha256(hashlib.sha256(vs).digest()).digest()[0:4]
         return b58encode(vs + check)
+
+    elif (len(scriptPubKey) == 35 # compressed
+            and _bord(scriptPubKey[0])  == 0x21
+            and _bord(scriptPubKey[34]) == OP_CHECKSIG):
+        pubkey = scriptPubKey[1:34]
+        h1 = hashlib.new('ripemd160', hashlib.sha256(pubkey).digest()).digest()
+        vs = _bchr(140) + h1
+        check = hashlib.sha256(hashlib.sha256(vs).digest()).digest()[0:4]        
+        return b58encode(vs + check)       
+
     else:
-        return 'can\'t decode'
+        return 'unable_to_decode_scriptPubKey'
 
 def deserialize_script(script):
     if isinstance(script, str) and re.match('^[0-9a-fA-F]*$', script):
@@ -301,6 +309,7 @@ blockjson = {
 }
 
 rawblock_str = "0000002064296b2bc7a1e1a7a633fd0144ddf69178f53e12707c5fc02867d5e37901000012d96015e87ea38ae59f209d2b72f0f139986f46d4d979c3b71c254bf8211ce3be633c58e479011e771823000301000000010000000000000000000000000000000000000000000000000000000000000000ffffffff060321af010103ffffffff02e1340e4300000000232103d5bbec914a715f26ad8bedb7e2dcdeedfffa7f987bb557be21ae0195db34144eacdb340e43000000001976a9149d6495ba4f13848ffdf2b1803b67e55bd01c851288ac000000000100000001bdc14bd0cd26eaad8a01f1cf9521fb5b1679302e8094cb0b24e92fc02ed85964010000006a473044022050786c6f8cebd41aaf38193d461f1e38fe781294bd7b412c0429b6c2ade19221022030c67ce89779cd7351ba8aa1c9def0bf9edaa1415b78e1e19e3a508f42c8b58e012102bc8afc95c2f4d85d82fdd59f5f92213982c4347d58dbd809e7126d5ed9113836feffffff02e043727c100000001976a9143fac1ed699d6fddd1892488d129b775d6206af7c88ac8cea44c7a90000001976a91433963f7065ddcdf7f3e39c78c3aa02c58f0a82cc88ac20af01000100000001d7dae185396113aea49d6773364f554b4680862cffb2424ed027def4c9413df3010000006a4730440220559769e63ab712a9a4ab1a8fa5b6786223518f1e416070a72ecb075e8422788602206a02099a0c70ab2ec92d89aea614bb4e9a708450d36ede3bab40b077a72c89a70121020ff9a502715373a8076deaf423eb854761c67e45e54ce36aeb3562664c2d2749feffffff0200e87648170000001976a9143fac1ed699d6fddd1892488d129b775d6206af7c88ac64a9bb67290000001976a9145a799e9cd0abf2d7ebf5ab71b44319230cff903788ac20af0100"
+
 
 rawtx_h   = {}
 rawtx_str = {}
@@ -362,30 +371,30 @@ for i in range(n_transactions):
     rawtx_hash = format_hash(double_sha256(transaction[1]))
 
     print('tx no: ------------------ ', i+1)
-#    print('rawtx_hash: ', rawtx_hash)
+    print('rawtx_hash: ', rawtx_hash)
 #    print('rawtx_h     ', rawtx_h[i])
 #    print('rawtx:      ', rawtx)
 #    print('rawtx_str:  ', rawtx_str[i])
 #    print()
 
     txo = deserialize(rawtx)
-#    print(json.dumps(txo, sort_keys=True, indent=4, separators=(',', ': ')))
-
+    print(json.dumps(txo, sort_keys=True, indent=4, separators=(',', ': ')))
     
     for x in txo.get('ins'):
         hashin   = x.get('outpoint')['hash']
         sriptsig = x.get('script')
-        if hashin != '0000000000000000000000000000000000000000000000000000000000000000':
-            des_sriptsig = deserialize_script(sriptsig)
-            pub_key = des_sriptsig[1]
-            addr  = scriptSig_decode(pub_key)
-            print('send:     %s' % addr)
-            
+#        if hashin != '0000000000000000000000000000000000000000000000000000000000000000':
+        des_sriptsig = deserialize_script(sriptsig)
+        pub_key = des_sriptsig
+        addr  = scriptSig_decode(pub_key)
+        print('send:     %s' % addr)
+        
     for x in txo.get('outs'):
         script = x.get('script')
         value  = x.get('value')
-   #     if hashin != '0000000000000000000000000000000000000000000000000000000000000000':
+#        if hashin != '0000000000000000000000000000000000000000000000000000000000000000':
         value = str('{0:.8f}'.format(float(value / 1e8)))
         print('recev:    %s, val: %s' % (scriptPubKey_decode(script), value))
 
     print()
+
