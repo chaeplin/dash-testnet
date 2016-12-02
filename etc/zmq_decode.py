@@ -124,6 +124,92 @@ If you see this, then you have identified the public key for this output script.
       }
     }
 
+
+output
+{
+    "coinbase": {
+        "addrfrom": "coinbase",
+        "hashin": "0000000000000000000000000000000000000000000000000000000000000000-0"
+    }
+}
+{
+    "yWfAXGd4ZDgNxvX6tvAzg5VT6JYRCP6KMh": {
+        "from": "coinbase",
+        "hashin": "0000000000000000000000000000000000000000000000000000000000000000-0",
+        "to": "yWfAXGd4ZDgNxvX6tvAzg5VT6JYRCP6KMh",
+        "txid": "d354a114b9e60428b1be6c4d1094e183c09d47572b5a4606214929eb713f5704-1",
+        "value": "11.25000000"
+    },
+    "yhF732jM8hA2e5svfBCa1heFbdHVNXdM8n": {
+        "from": "coinbase",
+        "hashin": "0000000000000000000000000000000000000000000000000000000000000000-0",
+        "to": "yhF732jM8hA2e5svfBCa1heFbdHVNXdM8n",
+        "txid": "d354a114b9e60428b1be6c4d1094e183c09d47572b5a4606214929eb713f5704-0",
+        "value": "11.25000000"
+    }
+}
+{
+    "difficulty": 0.0026907021552222492,
+    "hash": "00000091be3d7ca60f2846d9f42ae691a97e26486b875e982d066f7307ec1ae2",
+    "merkleroot": "d354a114b9e60428b1be6c4d1094e183c09d47572b5a4606214929eb713f5704",
+    "nonce": 1527106,
+    "p_b_hash": "000001654e9926874e3079caab923ee263cafe96b83531de5169036a7248c789",
+    "time": 1480698487,
+    "txs": {
+        "d354a114b9e60428b1be6c4d1094e183c09d47572b5a4606214929eb713f5704": "01000000010000000000000000000000000000000000000000000000000000000000000000ffffffff0603acb7010101ffffffff0240230e4300000000232103717f7082f58395f02afb45b1ae871cae31293b33c64c8d9568d9cac09fa70c51ac40230e43000000001976a914716bf2ce0f307d25c580f4951cb8eaf436b08c4988ac00000000"
+    },
+    "version": 536870912
+}
+
+
+
+{
+    "good": {
+        "addrfrom": "yUafbVmjbEySWk5oDviQZLB8C2NfYBkv5u",
+        "hashin": "4c027046072140ca5a25e1baf9aed14baa805e4d56fa02157f43608dbd8609f0-0"
+    }
+}
+{
+    "yPHiz6NV2zMzLSq9g2a1hBemGqVR45yY2T": {
+        "from": "yUafbVmjbEySWk5oDviQZLB8C2NfYBkv5u",
+        "hashin": "4c027046072140ca5a25e1baf9aed14baa805e4d56fa02157f43608dbd8609f0-0",
+        "to": "yPHiz6NV2zMzLSq9g2a1hBemGqVR45yY2T",
+        "txid": "7213f02c5a69ba436eed0fe9be00adfba733bbdbff795bc2b896a42c62f2bb5a-0",
+        "value": "0.01473488"
+    },
+    "yfvtL8DkiPj8F1dmGJHd68tXiSBCxHG3E2": {
+        "from": "yUafbVmjbEySWk5oDviQZLB8C2NfYBkv5u",
+        "hashin": "4c027046072140ca5a25e1baf9aed14baa805e4d56fa02157f43608dbd8609f0-0",
+        "to": "yfvtL8DkiPj8F1dmGJHd68tXiSBCxHG3E2",
+        "txid": "7213f02c5a69ba436eed0fe9be00adfba733bbdbff795bc2b896a42c62f2bb5a-1",
+        "value": "0.50000000"
+    }
+}
+
+{
+    "good": {
+        "addrfrom": "ygLEauaZPgaw3e8p1oHD3Ujpj2V6JS6eoz",
+        "hashin": "6a65379bc95bd4b2614d4b5528708db5c462ad27526a303a3b2916564df05f23-1"
+    }
+}
+{
+    "yYzEWuZGD7Ffzc1nV2GuGdPveFwFBzhybV": {
+        "from": "ygLEauaZPgaw3e8p1oHD3Ujpj2V6JS6eoz",
+        "hashin": "6a65379bc95bd4b2614d4b5528708db5c462ad27526a303a3b2916564df05f23-1",
+        "to": "yYzEWuZGD7Ffzc1nV2GuGdPveFwFBzhybV",
+        "txid": "64b8f8d168f8e536f540f0eea42c0c960c43058b8e18966f6c5e157e82f2ba2a-1",
+        "value": "2.99800000"
+    },
+    "ycr5c8sdaLCbABqiPmSh8JvrX6pXUC1LSS": {
+        "from": "ygLEauaZPgaw3e8p1oHD3Ujpj2V6JS6eoz",
+        "hashin": "6a65379bc95bd4b2614d4b5528708db5c462ad27526a303a3b2916564df05f23-1",
+        "to": "ycr5c8sdaLCbABqiPmSh8JvrX6pXUC1LSS",
+        "txid": "64b8f8d168f8e536f540f0eea42c0c960c43058b8e18966f6c5e157e82f2ba2a-0",
+        "value": "1.00000000"
+    }
+}
+
+
 """
 
 import array
@@ -636,16 +722,24 @@ try:
         topic = str(msg[0].decode("utf-8"))
         body  = str(binascii.hexlify(msg[1]).decode("utf-8"))
         sequence = "Unknown";
+
         if len(msg[-1]) == 4:
           msgSequence = struct.unpack('<I', msg[-1])[-1]
           sequence = str(msgSequence)
+
         if topic == 'rawtx':
             x = decoderawtx(body)
             print(json.dumps(x, sort_keys=True, indent=4, separators=(',', ': ')))
+
         if topic == 'rawblock':
             x = decoderawblock(body)
             print(json.dumps(x, sort_keys=True, indent=4, separators=(',', ': ')))
-        except KeyboardInterrupt:
+
+        if topic == 'rawtxlock':
+            x = decoderawblock(body)
+            print(json.dumps(x, sort_keys=True, indent=4, separators=(',', ': ')))
+
+except KeyboardInterrupt:
     zmqContext.destroy()
 
 
