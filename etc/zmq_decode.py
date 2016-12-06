@@ -555,8 +555,8 @@ def decoderawtx(rawtx):
         addrfrom = addrcheck.get('coinbase')['addrfrom']         
 
     if addrcheck.get('pubkey', None) != None:
-        hashin   = addrcheck.get('good')['hashin']
-        addrfrom = addrcheck.get('good')['addrfrom']      
+        hashin   = addrcheck.get('pubkey')['hashin']
+        addrfrom = addrcheck.get('pubkey')['addrfrom']      
 
     if addrcheck.get('good', None) != None:
         hashin   = addrcheck.get('good')['hashin']
