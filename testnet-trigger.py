@@ -103,12 +103,15 @@ def rpcgobjects():
                 g['fCachedDelete']         = int(gobjects[x]['fCachedDelete'])
                 g['fCachedEndorsed']       = int(gobjects[x]['fCachedEndorsed'])
 
-
                 if gobjecttype == 'trigger':
                     g['eventheight'] = gobjectDataString[0][1]['event_block_height']
                     if g['eventheight'] == nextsuperblock and g['fCachedFunding'] == int(True):
                         streamer.log_object(g, key_prefix=iss_prefix + '_g') 
-                        streamer.flush()
+
+                    elif g['eventheight'] == nextsuperblock and g['fCachedFunding'] == int(False):
+                        streamer.log_object(g, key_prefix=iss_prefix + '_x')
+
+                    streamer.flush()
 
     except:
         streamer.log_object(g, key_prefix=iss_prefix + '_g')
