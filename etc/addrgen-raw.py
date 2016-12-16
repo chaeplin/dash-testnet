@@ -55,7 +55,7 @@ def Hash160(msg):
 def pubkey_to_address(string):
     data = binascii.unhexlify(string)
     data_hash = Hash160(data)
-    vs = _bchr(addr_frefix) + data_hash                                               # change this
+    vs = _bchr(addr_prefix) + data_hash                                               # change this
     check = double_sha256(vs)[0:4]
     return b58encode(vs + check)
 
@@ -151,8 +151,12 @@ def fast_multiply(a, n):
 
 #-----------
 # dash testnet
-wif_prefix  = 239 # ef
-addr_frefix = 140 # 8c
+# wif_prefix  = 239 # ef
+# addr_prefix = 140 # 8c
+
+# dash mainnet
+wif_prefix  = 204  # cc
+addr_prefix = 76   # 4c
 
 #-----------
 valid_private_key = False
