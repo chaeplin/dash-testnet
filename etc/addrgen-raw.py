@@ -302,3 +302,38 @@ print ("Compressed tDASH Address (b58check) is:", pubkey_to_address(hex_compress
 #	Dash address              : yMjYHX4RuudHZ1rvd7eg2eH4EMY6Hbb3E1
 #	Dash address uncompressed : yNhTMTwym3q9Djq2SrdSCZQQFr79FUAMnR
 #	
+
+
+
+def wif_to_privkey(string):
+    wif_compressed = 52 == len(string)
+    pvkeyencoded = b58decode(string).hex()
+    wifversion = pvkeyencoded[:2]
+    checksum = pvkeyencoded[-8:]
+
+    vs = binascii.unhexlify(pvkeyencoded[:-8])
+    check = hashlib.sha256(hashlib.sha256(vs).digest()).digest()[0:4]
+
+    if wifversion == wif_prefix.to_bytes(1, byteorder='big').hex() and checksum == check.hex():
+
+        if wif_compressed == True:
+            compressed = True
+            privkey = pvkeyencoded[2:-10]        
+    
+        else:
+            compressed = False
+            privkey = pvkeyencoded[2:-8]
+
+        return {
+            'compressed': compressed,
+            'privkey': privkey
+        }
+
+    else:
+        return None
+
+
+print(wif_to_privkey(wif_encoded_private_key))
+print(wif_to_privkey(wif_compressed_private_key))
+
+
