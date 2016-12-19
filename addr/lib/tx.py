@@ -30,8 +30,10 @@ def decode(string, base):
 
 def deserialize_script(script):
     if isinstance(script, str) and re.match('^[0-9a-fA-F]*$', script):
-       return json_changebase(deserialize_script(binascii.unhexlify(script)),
-                              lambda x: safe_hexlify(x))
+       return json_changebase(deserialize_script(bytes.fromhex(script)),
+                              lambda x: safe_hexlify(x))        
+    #   return json_changebase(deserialize_script(binascii.unhexlify(script)),
+    #                          lambda x: safe_hexlify(x))
     out, pos = [], 0
     while pos < len(script):
         code = from_byte_to_int(script[pos])
@@ -56,8 +58,10 @@ def deserialize_script(script):
 
 def deserialize(tx):
     if isinstance(tx, str) and re.match('^[0-9a-fA-F]*$', tx):
-        return json_changebase(deserialize(binascii.unhexlify(tx)),
+        return json_changebase(deserialize(bytes.fromhex(tx)),
                               lambda x: safe_hexlify(x))
+        #return json_changebase(deserialize(binascii.unhexlify(tx)),
+        #                      lambda x: safe_hexlify(x))        
     pos = [0]
 
     def read_as_int(bytez):
@@ -104,7 +108,8 @@ def deserialize(tx):
 
 def decoderawtx(rawtx):
     txo  = deserialize(rawtx)
-    txid = format_hash(double_sha256(binascii.unhexlify(rawtx)))
+    txid = format_hash(double_sha256(bytes.fromhex(rawtx)))
+#    txid = format_hash(double_sha256(binascii.unhexlify(rawtx)))
 
     #print(txid)
     #print(json.dumps(txo, sort_keys=True, indent=4, separators=(',', ': ')))

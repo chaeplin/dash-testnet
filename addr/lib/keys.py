@@ -40,7 +40,8 @@ def get_random_key():
     }
 
 def pubkey_to_address(string):
-    data = binascii.unhexlify(string)
+    #data = binascii.unhexlify(string)
+    data = bytes.fromhex(string)
     data_hash = Hash160(data)
     vs = _bchr(addr_prefix) + data_hash   
     check = double_sha256(vs)[0:4]
@@ -48,10 +49,14 @@ def pubkey_to_address(string):
 
 def private_key_to_wif(string, compressed=False):
     if compressed:
-        prv = binascii.unhexlify(string + '01')
+        #prv = binascii.unhexlify(string + '01')
+        prv = bytes.fromhex(string + '01')      
     else:
-        prv = binascii.unhexlify(string)
+        #prv = binascii.unhexlify(string)
+        prv = bytes.fromhex(string)
+
     vs = _bchr(wif_prefix) + prv
+
     check = double_sha256(vs)[0:4]
     return b58encode(vs + check)
 
@@ -61,7 +66,8 @@ def wif_to_privkey(string):
     wifversion = pvkeyencoded[:2]
     checksum = pvkeyencoded[-8:]
 
-    vs = binascii.unhexlify(pvkeyencoded[:-8])
+    #vs = binascii.unhexlify(pvkeyencoded[:-8])
+    vs = bytes.fromhex(pvkeyencoded[:-8])
     check = double_sha256(vs)[0:4]
 
     if wifversion == wif_prefix.to_bytes(1, byteorder='big').hex() and checksum == check.hex():

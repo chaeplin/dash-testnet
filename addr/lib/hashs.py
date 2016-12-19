@@ -20,7 +20,8 @@ def sha256(string):
 
 #
 def format_hash(hash_):
-    return str(binascii.hexlify(hash_[::-1]).decode("utf-8"))
+    return hash_[::-1].hex()
+    #return str(binascii.hexlify(hash_[::-1]).decode("utf-8"))
 
 def json_changebase(obj, changer):
     if isinstance(obj, string_or_bytes_types):
@@ -43,7 +44,8 @@ def from_int_to_byte(a):
 def from_byte_to_int(a):
     return a
 
-def safe_hexlify(a):
-    return str(binascii.hexlify(a), 'utf-8')
+def safe_hexlify(a):  
+    return a.hex()
+    #return str(binascii.hexlify(a), 'utf-8')
 
 #

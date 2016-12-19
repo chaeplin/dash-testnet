@@ -15,12 +15,14 @@ def script_to_addr(script_hex):
     # list : outpu of deserialize_script
     if isinstance(script_hex, list):
         if len(script_hex) == 2:
-            script_bin = binascii.unhexlify(script_hex[1])
+            #script_bin = binascii.unhexlify(script_hex[1])
+            script_bin = bytes.fromhex(script_hex[1])
         elif len(script_hex) == 1:
             return 'pay_to_pubkey'
     
     else:
-        script_bin = binascii.unhexlify(script_hex)
+        #script_bin = binascii.unhexlify(script_hex)
+        script_bin = bytes.fromhex(script_hex)
 
     # format # 5
     if (len(script_bin) == 25

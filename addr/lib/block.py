@@ -82,7 +82,8 @@ def Transactionfromhex(raw_hex):
 
 
 def decoderawblock(rawblock):
-    block_hex = binascii.unhexlify(rawblock)
+    #block_hex = binascii.unhexlify(rawblock)
+    block_hex = bytes.fromhex(rawblock)
     bversion  = block_hex[:4]
     bpbhash   = block_hex[4:36]
     bmkroot   = block_hex[36:68]
@@ -106,7 +107,8 @@ def decoderawblock(rawblock):
     for i in range(n_transactions):
         transaction = Transactionfromhex(transaction_data[offset:])
         offset += transaction[0]
-        rawtx = binascii.hexlify(transaction[1]).decode("utf-8")
+        #rawtx = binascii.hexlify(transaction[1]).decode("utf-8")
+        rawtx = transaction[1].hex()
         rawtx_hash = format_hash(double_sha256(transaction[1]))
         txs[rawtx_hash] = rawtx
 
