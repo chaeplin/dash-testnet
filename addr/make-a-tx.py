@@ -155,7 +155,7 @@ def serialize_script_unit(unit):
         else:
             return unit.to_bytes(1, byteorder='big')
     elif unit is None:
-        return (b'\x00').hex()
+        return b'\x00'
     else:
         if len(unit) <= 75:
             return (len(unit)).to_bytes(1, byteorder='big')+unit
