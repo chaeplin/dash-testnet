@@ -172,9 +172,12 @@ def serialize_script(script):
          result += b #if isinstance(b, bytes) else bytes(b, 'utf-8')
      return result.hex()
 
-def sign(tx, i, priv, hashcode=SIGHASH_ALL):
+def sign(tx, i, priv, priv_comp, hashcode=SIGHASH_ALL):
     i = int(i)
-    pub = get_public_key(priv).get('pubkeyhex_compressed')
+    if priv_comp:
+        pub = get_public_key(priv).get('pubkeyhex_compressed')
+    else:
+        pub = get_public_key(priv).get('pubkeyhex')
     address = pubkey_to_address(pub)
     print(address)
     signing_tx = signature_form(tx, i, address_to_script(address), hashcode)
@@ -207,11 +210,15 @@ def sign(tx, i, priv, hashcode=SIGHASH_ALL):
 #	yUq9EziPwC7rWnAEt5r4ij4QBj6L6zpbDZ
 
 priv_wif = 'cVgmh3zFLPVXpdxi473SMmxmfbFJuN4S7pvgAn7m7y9ci4upr19H'
-priv = wif_to_privkey(priv_wif).get('privkey')
+privkey  = wif_to_privkey(priv_wif)
+
+priv = privkey.get('privkey')
+priv_comp = privkey.get('compressed')
+
 h =  [{'output': u'920e7a6ecb3387ec39ca231ba76c6e42c945fdddf257138af23d8220bfefe0ff:0', 'value': 500000000, 'address': u'yYicJq1HyiZeMXRu6CeNYwPgPcqoWhNLVf'}]
 outs = [{'value': 499999999, 'address': u'yUq9EziPwC7rWnAEt5r4ij4QBj6L6zpbDZ'}]
 tx = mktx(h,outs)
-tx2 = sign(tx,0,priv)
+tx2 = sign(tx,0,priv, priv_comp)
 #tx3 = sign(tx2,1,priv)
 print(tx2)
 
