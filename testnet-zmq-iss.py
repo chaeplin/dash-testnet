@@ -58,8 +58,6 @@ def check_version():
         return None
 
 def rpcgetinfo():
-#    streamer = Streamer(bucket_name=iss_bucket_name, bucket_key=iss_bucket_key, access_key=iss_access_key, buffer_size=100)
-
     epoch00 = time.time()
 
     try:
@@ -89,10 +87,12 @@ def rpcgetinfo():
             bucket['besthash']        = besthash
             bucket['banned']          = len(banned)
             streamer.log_object(bucket, key_prefix=iss_prefix, epoch=epoch00)
+            streamer.flush()
 
     except:
         twitter.update_status(status='test02 dash has prob')
         pass
+
 
     try:
         mncount = access.masternode('count', 'all')
@@ -106,6 +106,7 @@ def rpcgetinfo():
 
             if int(bucket_mn['total']) > 0:
                 streamer.log_object(bucket_mn, key_prefix=iss_prefix + '_mn', epoch=epoch00)
+                streamer.flush()
 
     except:
         pass
@@ -115,17 +116,21 @@ def rpcgetinfo():
         spork = access.spork('active')
         if spork:
             streamer.log_object(spork, key_prefix=iss_prefix + '_spork', epoch=epoch00)
+            streamer.flush()
 
     except:
         pass
+
 
     try:
         mn1_status = access.masternodelist('status', 'ac18b41cc90a33e7db4ccd6912387fb5c8a884150d4df83577d0e58235422b76')
         if mn1_status:
             streamer.log_object(mn1_status, key_prefix=iss_prefix + '_mnstatus', epoch=epoch00)
+            streamer.flush()
 
     except:
         pass
+
 
     try:
         getgovernanceinfo = access.getgovernanceinfo()
@@ -137,6 +142,7 @@ def rpcgetinfo():
             bucket_gov['superblockcycle']     = getgovernanceinfo['superblockcycle']
             bucket_gov['governanceminquorum'] = getgovernanceinfo['governanceminquorum']
             streamer.log_object(bucket_gov, key_prefix=iss_prefix + '_gov', epoch=epoch00)
+            streamer.flush()
 
     except:
         pass
@@ -151,8 +157,6 @@ def rpcgetinfo():
 #    streamer.log_object(swap, key_prefix=iss_prefix + '_swap_mem')
 
     streamer.flush()
-#    streamer.close()
-
 
 # rpc 
 serverURL = 'http://' + rpcuser + ':' + rpcpassword + '@' + rpcbindip + ':' + str(rpcport)
@@ -210,4 +214,4 @@ except KeyboardInterrupt:
     streamer.close()
     #zmqContext.destroy()
     sys.exit()
-    
+
