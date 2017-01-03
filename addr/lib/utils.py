@@ -31,4 +31,21 @@ code_strings = {
     256: ''.join([chr(x) for x in range(256)])
 }
 
+
+
+def num_to_varint(a):
+    x = int(a)
+    if x < 253: return x.to_bytes(1, byteorder='big') 
+    elif x < 65536: return int(253).to_bytes(1, byteorder='big') + x.to_bytes(2, byteorder='little')
+    elif x < 4294967296: return int(254).to_bytes(1, byteorder='big') + x.to_bytes(4, byteorder='little')
+    else: return int(255).to_bytes(1, byteorder='big') + x.to_bytes(8, byteorder='little')
+
+def varint_to_num(a):
+    format_ = int.from_bytes(bytes.fromhex(a[:2]), byteorder='big')    
+    assert(format_ <= 255)
+    if format_ < 253: return format_
+    elif format_ < 65536: return int.from_bytes(bytes.fromhex(a[2:18]), byteorder='little')
+    elif format_ < 4294967296: return int.from_bytes(bytes.fromhex(a[2:34]), byteorder='little')
+    else: return int.from_bytes(bytes.fromhex(a[2:66]), byteorder='little')
+    
 #
