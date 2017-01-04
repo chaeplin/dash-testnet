@@ -1,9 +1,12 @@
-'''
+```
+https://docs.influxdata.com/influxdb/v1.1/query_language/authentication_and_authorization/
 > influx
 CREATE USER "username" WITH PASSWORD 'password' WITH ALL PRIVILEGES
 CREATE DATABASE "databasename"
 SHOW DATABASES
-'''
+CREATE USER "ronlyuser" WITH PASSWORD 'ronlyuserpassword'
+ GRANT READ ON "databasename" TO "ronlyuser"
+```
 
 influxdb.conf
 ```
