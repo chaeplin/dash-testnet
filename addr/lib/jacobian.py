@@ -68,6 +68,8 @@ def jacobian_multiply(a, n):
         return jacobian_add(jacobian_double(jacobian_multiply(a, n//2)), a)
 
 def fast_multiply(a, n):
+    print('fast_multiply a: ', a)
+    print('fast_multiply n: ', n)
     return from_jacobian(jacobian_multiply(to_jacobian(a), n))
 
 
