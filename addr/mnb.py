@@ -1,6 +1,9 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
+# code from https://github.com/dashpay/electrum-dash
+
+
 import sys
 import hmac
 import time
