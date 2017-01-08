@@ -38,12 +38,15 @@ max_gab = 20
 # masternode config
 # Format: "alias IP:port masternodeprivkey collateral_output_txid collateral_output_index collateral_address"
 masternode_conf = [
-    "mn1 133.130.97.225:19999 92xM17btJMuDHBad7aBQYhviexiuhmC9VzjWajDMQdnSBrgQ5K8 db6730133f883f64cc52725ed7cca5f1d8b98b3120bc9eb4260415c1865e090f 10 92diGLjNnjQN6xM1GfC2wG2qJ9rizYe7qcx97u5xLzY8J3eJZTs",
-    "mn2 150.95.138.230:19999 92towRFBfcU5Yfdtyvn8e2V7c6UN4c7BzHQ7qCMWRcB5K6w3Rtp db6730133f883f64cc52725ed7cca5f1d8b98b3120bc9eb4260415c1865e090f 7 938pKZtKQwQbbhiwxKyyC4VcQzJzUT5QsJerrDVHvbYvSdBveuw"
+    "mn1 133.130.97.225:19999 92xM17btJMuDHBad7aBQYhviexiuhmC9VzjWajDMQdnSBrgQ5K8 9214e2ffb47a8f93562ea968ff1b583f12b1c6de9a36dae6d0ef113b448b45d5 1 92diGLjNnjQN6xM1GfC2wG2qJ9rizYe7qcx97u5xLzY8J3eJZTs",
+    "mn2 150.95.138.230:19999 92towRFBfcU5Yfdtyvn8e2V7c6UN4c7BzHQ7qCMWRcB5K6w3Rtp b6137baa16b78e35062ffee9adf2c02d1280989d1c152e2927c1e1a175ddee46 1 938pKZtKQwQbbhiwxKyyC4VcQzJzUT5QsJerrDVHvbYvSdBveuw"
 ]
 
-# mn1 yP318mMoq3XEragXb67sYZXsUadzzw1Evb / yPtHFz5Ztrqdq4Xn4uinUsMgW3Seqx9dLs
-# mn2 yUaA5zYaaL7uR9PNbCtHTQrbvxWEoiJtjf / yiiBfu1qmompHRs7en1XWx3ZgHVwrBaFmr
+#{'collateral_txidn': 10, 'masternode_privkey': '92xM17btJMuDHBad7aBQYhviexiuhmC9VzjWajDMQdnSBrgQ5K8', 'collateral_txid': 'db6730133f883f64cc52725ed7cca5f1d8b98b3120bc9eb4260415c1865e090f', 'collateral_privkey': '92diGLjNnjQN6xM1GfC2wG2qJ9rizYe7qcx97u5xLzY8J3eJZTs', 'masternode_address': 'yP318mMoq3XEragXb67sYZXsUadzzw1Evb', 'collateral_pubkey': '04491e2b6ea8b2fc65be42ee3e2e4477ba8ae49f450e432ce304a2c977e5cdcb3ef4c080a7f6b1aa40d964926ae40e3208d95e95858d0a068672bc7cd45e98e928', 'collateral_address': 'yPtHFz5Ztrqdq4Xn4uinUsMgW3Seqx9dLs', 'ipport': '133.130.97.225:19999', 'masternode_pubkey': '045179c52946cc56b5cf8992b34c1fbd5d1bda84f80c777ba2ee73f72c9213d40b0712771f94c28c4ba0f0a56103fd4a162026e52f5be8977844294ed0733fb4d2'}
+
+
+#{'collateral_txidn': 7, 'masternode_privkey': '92towRFBfcU5Yfdtyvn8e2V7c6UN4c7BzHQ7qCMWRcB5K6w3Rtp', 'collateral_txid': 'db6730133f883f64cc52725ed7cca5f1d8b98b3120bc9eb4260415c1865e090f', 'collateral_privkey': '938pKZtKQwQbbhiwxKyyC4VcQzJzUT5QsJerrDVHvbYvSdBveuw', 'masternode_address': 'yUaA5zYaaL7uR9PNbCtHTQrbvxWEoiJtjf', 'collateral_pubkey': '04c94fca34af375ae73fdca68099bd239b58819d944608ea432ba5de1774e6b898cb15f54a81611bda7354310afe3693c3ecd983cbf496459be2aedbe79f556103', 'collateral_address': 'yiiBfu1qmompHRs7en1XWx3ZgHVwrBaFmr', 'ipport': '150.95.138.230:19999', 'masternode_pubkey': '04918dd6648c0a25e00682d0196f8cf04f940f075995016d895908cdbd7e806c85937c96f610a51a5f57e0fd5b7c9e041b6df1102f1488b3e7e497586d6840c8b2'}
+
 # ----- change
 
 
@@ -124,14 +127,11 @@ def make_mnb(alias, mn_conf):
     print('pubKeyCollateralAddress --> : ', collateral_in)
     print('pubKeyMasternode --> : ', delegate_in)
 
-#    serialize_for_sig = str(mn_conf['ipport']) + str(sig_time) \
-#                      + format_hash(Hash160(bytes.fromhex(mn_conf['collateral_pubkey']))) \
-#                      + format_hash(Hash160(bytes.fromhex(mn_conf['masternode_pubkey']))) + str(protocol_version)
 
+    # pubkey_hash
     serialize_for_sig = str(mn_conf['ipport']) + str(sig_time) \
-                      + mn_conf['collateral_pubkey']  \
-                      + mn_conf['masternode_pubkey'] \
-                      + str(protocol_version)
+                      + format_hash(Hash160(bytes.fromhex(mn_conf['collateral_pubkey']))) \
+                      + format_hash(Hash160(bytes.fromhex(mn_conf['masternode_pubkey']))) + str(protocol_version)
 
 #    sig = keepkeysign(serialize_for_sig, mn_conf['collateral_mpath'], mn_conf['collateral_address'])
 
