@@ -81,9 +81,11 @@ def keepkeysign(serialize_for_sig, mpath, address):
     return sig.signature.hex()
 
 def signmessage(last_ping_serialize_for_sig, address):
-    r = access.signmessage(address, last_ping_serialize_for_sig)
-    print(r)
-    return(base64.b64decode(r).hex())
+    try:
+        r = access.signmessage(address, last_ping_serialize_for_sig)
+        return(base64.b64decode(r).hex())
+    except:
+        sys.exit("\n\nPlease enter the wallet passphrase with walletpassphrase first\n")
 
 def validateaddress(address):
     r = access.validateaddress(address)
@@ -268,9 +270,11 @@ getinfo = access.getinfo()
 if getinfo.get('unlocked_until', None) != None:
     print('---> please unlock wallet using ==> Menu | Setting | Unlock Wallet')
 
-block_hash = access.getbestblockhash()
+cur_block_height = access.getblockcount()
 
-#print(block_hash)
+block_hash = access.getblockhash(cur_block_height - 12)
+
+print(block_hash)
 
 for x in mn_config:
     print()
