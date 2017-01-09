@@ -1,6 +1,9 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
+# codes form code from https://github.com/dashpay/electrum-dash
+# ref : https://github.com/dashpay/dash/blob/v0.12.1.x/dash-docs/protocol-documentation.md
+
 import io, os, sys
 import simplejson as json
 import time
@@ -18,6 +21,10 @@ from lib.jacobian import *
 from lib.keys import *
 from lib.utils import *
 
+from keepkeylib.client import KeepKeyClient
+from keepkeylib.transport_hid import HidTransport
+
+
 from pyfiglet import Figlet
 from progress.spinner import Spinner
 
@@ -30,15 +37,21 @@ rpcpassword = 'rpc_password'
 rpcbindip   = '127.0.0.1'
 rpcport     = 19998
 
+# keepkey config
+mpath   = "44'/165'/1990'/0"
+xpub    = 'tpubDEiBemN1QNqgAMu41t2ojcbeib5YUrJ4Vtx4dUToo1Q6R5gseuY6acV3Y2Sh6xUBpbB982ehrJAUuActSwpq8VVG7xZjtcyjTCLawuLKhU4'
+max_gab = 20
+
 # masternode config
 # Format: "alias IP:port masternodeprivkey collateral_output_txid collateral_output_index collateral_address"
-#masternode_conf = [
-#    "mn10 133.130.103.78:19999 93P2CX7cf8mYYzEnP37LMcdnBWpGUu5qJV7nCNxd58ARr1nZUEP cf2cdd50d7196317f3daa77d3b1e8b67c28099d01a12ece6bcbd5d8f4622b274 1 cRX2YCT9JqqrZFtrN8Qt5taUgsDaKE79y1khtdxRce6YNDco7WnJ"
-#]
-
 masternode_conf = [
-    "mn1 133.130.97.225:19999 92xM17btJMuDHBad7aBQYhviexiuhmC9VzjWajDMQdnSBrgQ5K8 9214e2ffb47a8f93562ea968ff1b583f12b1c6de9a36dae6d0ef113b448b45d5 1 92diGLjNnjQN6xM1GfC2wG2qJ9rizYe7qcx97u5xLzY8J3eJZTs"
+    "mn1 133.130.97.225:19999 92xM17btJMuDHBad7aBQYhviexiuhmC9VzjWajDMQdnSBrgQ5K8 db6730133f883f64cc52725ed7cca5f1d8b98b3120bc9eb4260415c1865e090f 10 ydWWT8kCMij5LhMMGVzBDyXZ9j3ZPkkuiN",
+    "mn2 150.95.138.230:19999 92towRFBfcU5Yfdtyvn8e2V7c6UN4c7BzHQ7qCMWRcB5K6w3Rtp db6730133f883f64cc52725ed7cca5f1d8b98b3120bc9eb4260415c1865e090f 7 yX1MJBGdmLWNkyh3bcSQLPj3a4aKbyPXs1"
 ]
+
+
+# ----- change
+
 
 # rpc 
 serverURL = 'http://' + rpcuser + ':' + rpcpassword + '@' + rpcbindip + ':' + str(rpcport)
@@ -64,6 +77,9 @@ def serialize_input_str(tx, prevout_n, sequence, scriptSig):
     return ''.join(s)
 
 def keepkeysign(serialize_for_sig, mpath, address):
+    print()
+    print('-------> check keepkey and press button')
+    print()
     sig = client.sign_message('tDash', [44 | 0x80000000, 165 | 0x80000000, 1990 | 0x80000000, 0, int(mpath)], serialize_for_sig)
     if sig.address != address:
         sys.exit('**** ----> check key path')
@@ -85,12 +101,12 @@ def validateaddress(address):
     return r['ismine']
 
 def importprivkey(privkey, alias):
-    print(privkey, alias)
     r = access.importprivkey(privkey, alias, False)
 
 def make_mnb(alias, mn_conf):
     print()
     print('---> making mnb for %s' % alias)
+    print()
 
     # ------ some default config
     scriptSig = ''
@@ -101,14 +117,11 @@ def make_mnb(alias, mn_conf):
     cur_block_height = access.getblockcount()
     block_hash = access.getblockhash(cur_block_height - 12)
 
-    vinc   = num_to_varint(1).hex()
+    vinc   = num_to_varint(1).hex() # ? count of rx 
     vintx  = bytes.fromhex(mn_conf['collateral_txid'])[::-1].hex()
     vinno  = mn_conf['collateral_txidn'].to_bytes(4, byteorder='big')[::-1].hex()
     vinsig = num_to_varint(len(scriptSig)/2).hex() + bytes.fromhex(scriptSig)[::-1].hex()
     vinseq = sequence.to_bytes(4, byteorder='big')[::-1].hex()
-
-    print('vin ---> : ', vintx)
-    print('vin --> : ', vintx + vinno + vinsig + vinseq)
 
     ip, port = mn_conf['ipport'].split(':')
 
@@ -119,52 +132,27 @@ def make_mnb(alias, mn_conf):
 
     ipv6map += int(port).to_bytes(2, byteorder='big').hex()
 
-    print('addr --> : ', ipv6map)
-
     collateral_in = num_to_varint(len(mn_conf['collateral_pubkey'])/2).hex() + mn_conf['collateral_pubkey']
     delegate_in   = num_to_varint(len(mn_conf['masternode_pubkey'])/2).hex() + mn_conf['masternode_pubkey']
 
-    print('pubKeyCollateralAddress --> : ', collateral_in)
-    print('pubKeyMasternode --> : ', delegate_in)
-
-
-    # pubkey_hash
     serialize_for_sig = str(mn_conf['ipport']) + str(sig_time) \
                       + format_hash(Hash160(bytes.fromhex(mn_conf['collateral_pubkey']))) \
                       + format_hash(Hash160(bytes.fromhex(mn_conf['masternode_pubkey']))) + str(protocol_version)
 
-#    sig = keepkeysign(serialize_for_sig, mn_conf['collateral_mpath'], mn_conf['collateral_address'])
-
-    if not validateaddress(mn_conf['collateral_address']):
-        keyalias = alias + '-c-' + ip
-        importprivkey(mn_conf['collateral_privkey'], keyalias)
-
-    sig = signmessage(serialize_for_sig, mn_conf['collateral_address'])
-
-
-    print('serialize_for_sig ---> : ', serialize_for_sig)
-    print('sig --> : ', sig)
-
+    sig = keepkeysign(serialize_for_sig, mn_conf['collateral_mpath'], mn_conf['collateral_address'])
 
     work_sig_time     = sig_time.to_bytes(8, byteorder='big')[::-1].hex() 
     work_protoversion = protocol_version.to_bytes(4, byteorder='big')[::-1].hex()
 
-    print('sigTime --> : ', work_sig_time)
-    print('nProtocolVersion --> : ', work_protoversion)
-
     last_ping_block_hash = bytes.fromhex(block_hash)[::-1].hex() 
 
-    print('block_hash ---> : ', last_ping_block_hash)
     last_ping_serialize_for_sig  = serialize_input_str(mn_conf['collateral_txid'], mn_conf['collateral_txidn'], sequence, scriptSig) + block_hash + str(sig_time)
 
     if not validateaddress(mn_conf['masternode_address']):
-        keyalias = alias + '-m-' + ip
+        keyalias = alias + '-' + ip
         importprivkey(mn_conf['masternode_privkey'], keyalias)
 
     sig2 = signmessage(last_ping_serialize_for_sig, mn_conf['masternode_address'])
-
-    print('last_ping_serialize_for_sig ---> : ', last_ping_serialize_for_sig)
-    print('sig2 --> : ', sig2)    
 
     work = vinc + vintx + vinno + vinsig + vinseq \
         + ipv6map + collateral_in + delegate_in \
@@ -208,11 +196,11 @@ def parse_masternode_conf(lines):
         mnprivkey_wif = s[2]
         txid = s[3]
         txidn = s[4]
-        colprivkey_wif = s[5]
+        mnaddr = s[5]
 
-#       collateral_pubkey  = get_public_key(wif_to_privkey(colprivkey_wif).get('privkey')).get('pubkeyhex_compressed')
-        collateral_pubkey  = get_public_key(wif_to_privkey(colprivkey_wif).get('privkey')).get('pubkeyhex')        
-        collateral_address = pubkey_to_address(collateral_pubkey)
+        check_mpath        = process_chain(mnaddr)
+        collateral_mpath   = check_mpath.get('mpath')
+        collateral_pubkey  = check_mpath.get('addrpubkey')
 
         masternode_pubkey  = get_public_key(wif_to_privkey(mnprivkey_wif).get('privkey')).get('pubkeyhex')
         masternode_address = pubkey_to_address(masternode_pubkey)
@@ -224,9 +212,9 @@ def parse_masternode_conf(lines):
             "masternode_address": masternode_address,
             "collateral_txid": txid,
             "collateral_txidn": int(txidn),
-            "collateral_privkey": colprivkey_wif,
-            "collateral_pubkey": collateral_pubkey,
-            "collateral_address": collateral_address
+            "collateral_address": mnaddr,
+            "collateral_mpath": collateral_mpath,
+            "collateral_pubkey": collateral_pubkey
         }
 
     return mn_conf
@@ -248,6 +236,15 @@ os.system('clear')  # For Linux/OS X
 f = Figlet(font='slant')
 print(f.renderText('DashPay Masternode KeepKey'))
 
+# keepkey
+devices = HidTransport.enumerate()
+
+if len(devices) == 0:
+    print('No KeepKey found')
+    sys.exit()
+
+transport = HidTransport(devices[0])
+client = KeepKeyClient(transport)
 
 ###
 print('---> checking masternoe config')
