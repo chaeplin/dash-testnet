@@ -38,20 +38,23 @@ rpcbindip   = '127.0.0.1'
 rpcport     = 19998
 
 # keepkey config
+# path used on keepkey to store 1K tDash
 mpath   = "44'/165'/1990'/0"
 xpub    = 'tpubDEiBemN1QNqgAMu41t2ojcbeib5YUrJ4Vtx4dUToo1Q6R5gseuY6acV3Y2Sh6xUBpbB982ehrJAUuActSwpq8VVG7xZjtcyjTCLawuLKhU4'
 max_gab = 20
+
+announce = True
 
 # masternode config
 # Format: "alias IP:port masternodeprivkey collateral_output_txid collateral_output_index collateral_address"
 masternode_conf = [
     "mn1 133.130.97.225:19999 92xM17btJMuDHBad7aBQYhviexiuhmC9VzjWajDMQdnSBrgQ5K8 db6730133f883f64cc52725ed7cca5f1d8b98b3120bc9eb4260415c1865e090f 10 ydWWT8kCMij5LhMMGVzBDyXZ9j3ZPkkuiN",
-    "mn2 150.95.138.230:19999 92towRFBfcU5Yfdtyvn8e2V7c6UN4c7BzHQ7qCMWRcB5K6w3Rtp db6730133f883f64cc52725ed7cca5f1d8b98b3120bc9eb4260415c1865e090f 7 yX1MJBGdmLWNkyh3bcSQLPj3a4aKbyPXs1"
+    "mn2 150.95.138.230:19999 92towRFBfcU5Yfdtyvn8e2V7c6UN4c7BzHQ7qCMWRcB5K6w3Rtp db6730133f883f64cc52725ed7cca5f1d8b98b3120bc9eb4260415c1865e090f 7 yX1MJBGdmLWNkyh3bcSQLPj3a4aKbyPXs1",
+    "mn3 133.130.103.78:19999 92ufDJMw8KCy9JnN8D1qgzW43bk2iyaLKQdgKF1NTMbUeNpeYoQ db6730133f883f64cc52725ed7cca5f1d8b98b3120bc9eb4260415c1865e090f 3 yNEPZQQZdGeJYdqMjF2wL7SmRevFfJA3zC",
+    "mn4 150.95.133.185:19999 92dEJ4uCJQtsnrtsJPyqbCw2axmAPZpSpBDXT4Mmk1AfpWM83fy db6730133f883f64cc52725ed7cca5f1d8b98b3120bc9eb4260415c1865e090f 9 yamNx8kKSmgDfHKTapsRYWRJsJ952Hmocb"
 ]
 
-
 # ----- change
-
 
 # rpc 
 serverURL = 'http://' + rpcuser + ':' + rpcpassword + '@' + rpcbindip + ':' + str(rpcport)
@@ -78,8 +81,9 @@ def serialize_input_str(tx, prevout_n, sequence, scriptSig):
 
 def keepkeysign(serialize_for_sig, mpath, address):
     print()
-    print('-------> check keepkey and press button')
+    print('---> check keepkey and press button')
     print()
+    # change 165/1990/0 to mpath
     sig = client.sign_message('tDash', [44 | 0x80000000, 165 | 0x80000000, 1990 | 0x80000000, 0, int(mpath)], serialize_for_sig)
     if sig.address != address:
         sys.exit('**** ----> check key path')
@@ -101,7 +105,12 @@ def validateaddress(address):
     return r['ismine']
 
 def importprivkey(privkey, alias):
-    r = access.importprivkey(privkey, alias, False)
+    try:
+        r = access.importprivkey(privkey, alias, False)
+
+    except Exception as e:
+        print(e.args)
+        sys.exit("\n\nPlease enter the wallet passphrase with walletpassphrase first\n")
 
 def make_mnb(alias, mn_conf):
     print()
@@ -227,59 +236,110 @@ def checksynced():
     except:
         return False
 
-#---------------------------------------------------------------------------
-# pyfiglet screen
-os.system('cls')  # For Windows
-os.system('clear')  # For Linux/OS X
+#-------------------
+def clear_screen():
+    # pyfiglet screen
+    os.system('cls')  # For Windows
+    os.system('clear')  # For Linux/OS X
 
-##
-f = Figlet(font='slant')
-print(f.renderText('DashPay Masternode KeepKey'))
+def logo_show():
+    print('========================================================')
+    f = Figlet(font='slant')
+    print(f.renderText('DashPay Masternode KeepKey'))
+    print('========================================================')
 
-# keepkey
-devices = HidTransport.enumerate()
-
-if len(devices) == 0:
-    print('No KeepKey found')
-    sys.exit()
-
-transport = HidTransport(devices[0])
-client = KeepKeyClient(transport)
-
-###
-print('---> checking masternoe config')
-mn_config = parse_masternode_conf(masternode_conf)
-#print(mn_config['mn1'])
-
-##
-print('---> run Dash-QT or dashd')
-
-spinner = Spinner('---> checking dashd syncing status ')
-while(not checksynced()):
+def check_masternode():
     try:
-        spinner.next()
-        time.sleep(1)
+        mn_of_net = access.masternodelist()
+        return mn_of_net
 
-    except:
-        sys.exit()
+    except Exception as e:
+        print(e.args)
+        sys.exit("\n\nDash-QT or dashd running ?\n")
 
-getinfo = access.getinfo()
-if getinfo.get('unlocked_until', None) != None:
-    print('---> please unlock wallet using ==> Menu | Setting | Unlock Wallet')
+def check_wallet_lock():
+    try:
+        getinfo = access.getinfo()
+        if getinfo.get('unlocked_until', None) != None:
+            print('\n---> please unlock wallet \n\t==> Menu | Setting | Unlock Wallet or \n\t==> (dash-cli) walletpassphrase "passphrase" timeout')
 
-for x in mn_config:
+    except Exception as e:
+        print(e.args)
+        sys.exit("\n\nDash-QT or dashd running ?\n")
+
+def start_masternode(alias, mnconfig):
+#    for x in mn_config:
+#        print()
+#        work = make_mnb(x, mn_config[x])
+#        print('result --> : ', work)
+#    
+#        verify = access.masternodebroadcast("decode", work)
+#        print(json.dumps(verify, sort_keys=True, indent=4, separators=(',', ': ')))
+#
+#        if announce:
+#            relay  = access.masternodebroadcast("relay", work)
+#            print(json.dumps(relay, sort_keys=True, indent=4, separators=(',', ': ')))
+#
+
     print()
-    #print(mn_config[x])
-    #print()
-    work = make_mnb(x, mn_config[x])
+    work = make_mnb(alias, mnconfig)
     print('result --> : ', work)
-
+    
     verify = access.masternodebroadcast("decode", work)
     print(json.dumps(verify, sort_keys=True, indent=4, separators=(',', ': ')))
-    #relay  = access.masternodebroadcast("relay", work)
-    #print(relay)
+    
+    if announce:
+        relay  = access.masternodebroadcast("relay", work)
+        print(json.dumps(relay, sort_keys=True, indent=4, separators=(',', ': ')))    
 
 
 
+#-------------------
+if __name__ == "__main__":
 
+    clear_screen()
+    logo_show()
+    
+    # keepkey
+    devices = HidTransport.enumerate()
+    
+    if len(devices) == 0:
+        print('No KeepKey found')
+        sys.exit()
+    
+    else:
+        transport = HidTransport(devices[0])
+        client = KeepKeyClient(transport)
+    
+    # mn_config
+    print('---> checking masternoe config')
+    mn_config = parse_masternode_conf(masternode_conf)
+    
+    # 
+    print('---> run Dash-QT or dashd')
+    
+    spinner = Spinner('---> checking dashd syncing status ')
+    while(not checksynced()):
+        try:
+            spinner.next()
+            time.sleep(1)
+    
+        except:
+            sys.exit()
+    
+    check_wallet_lock()
+    mns = check_masternode()
+
+    for x in mn_config:
+        txidtxidn = mn_config[x]['collateral_txid'] + '-' + str(mn_config[x]['collateral_txidn'])
+        if txidtxidn in mns:
+            if (mns[txidtxidn] != 'ENABLED' and  mns[txidtxidn] != 'PRE_ENABLED'):
+                start_masternode(x, mn_config[x])
+        else:
+            start_masternode(x, mn_config[x])
+
+
+    print()
+    print('done')
+# end
 
