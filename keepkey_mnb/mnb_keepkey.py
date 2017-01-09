@@ -267,21 +267,13 @@ def check_wallet_lock():
         print(e.args)
         sys.exit("\n\nDash-QT or dashd running ?\n")
 
-def start_masternode(alias, mnconfig):
-#    for x in mn_config:
-#        print()
-#        work = make_mnb(x, mn_config[x])
-#        print('result --> : ', work)
-#    
-#        verify = access.masternodebroadcast("decode", work)
-#        print(json.dumps(verify, sort_keys=True, indent=4, separators=(',', ': ')))
-#
-#        if announce:
-#            relay  = access.masternodebroadcast("relay", work)
-#            print(json.dumps(relay, sort_keys=True, indent=4, separators=(',', ': ')))
-#
+def print_mnlist(alias, mnconfig, mnstatus):
+    print('\t' + alias + '\t' + mnconfig['ipport'] + '\t' + mnconfig['collateral_address'] + '\t' + mnstatus)
 
-    print()
+def get_txidtxidn(mn_config):
+    return mn_config['collateral_txid'] + '-' + str(mn_config['collateral_txidn'])
+
+def start_masternode(alias, mnconfig):
     work = make_mnb(alias, mnconfig)
     print('result --> : ', work)
     
@@ -330,8 +322,13 @@ if __name__ == "__main__":
     check_wallet_lock()
     mns = check_masternode()
 
-    for x in mn_config:
-        txidtxidn = mn_config[x]['collateral_txid'] + '-' + str(mn_config[x]['collateral_txidn'])
+    print()
+    print('\talias\tip\t\t\tcollateral address\t\t\tstatus')
+    for m in sorted(list(mn_config.keys())):
+        print_mnlist(m, mn_config[m], mns[get_txidtxidn(mn_config[m])])
+
+    for x in sorted(list(mn_config.keys())):
+        txidtxidn = get_txidtxidn(mn_config[x])
         if txidtxidn in mns:
             if (mns[txidtxidn] != 'ENABLED' and  mns[txidtxidn] != 'PRE_ENABLED'):
                 start_masternode(x, mn_config[x])
@@ -341,5 +338,6 @@ if __name__ == "__main__":
 
     print()
     print('done')
+    
 # end
 
