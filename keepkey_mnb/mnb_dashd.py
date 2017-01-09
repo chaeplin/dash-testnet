@@ -1,6 +1,9 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
+# codes form code from https://github.com/dashpay/electrum-dash
+# ref : https://github.com/dashpay/dash/blob/v0.12.1.x/dash-docs/protocol-documentation.md
+
 import io, os, sys
 import simplejson as json
 import time
