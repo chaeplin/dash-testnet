@@ -6,6 +6,7 @@ Using Keepkey to start Masternode
 - Keepkey 
 - keepkey-firmware
 - rpc conn to Dash-QT or dashd
+- python3
 - python-keepkey
 - python-bitcoinrpc
 - python-progress
@@ -17,11 +18,19 @@ Using Keepkey to start Masternode
 - https://github.com/chaeplin/dash-testnet/tree/master/keepkey_firmware
 
 ### python lib
+- use python-virtualenv3
 - https://github.com/chaeplin/python-keepkey
-- https://github.com/jgarzik/python-bitcoinrpc
+- https://github.com/chaeplin/python-bitcoinrpc
 - https://github.com/verigak/progress
 - https://github.com/pwaller/pyfiglet
 - https://github.com/chaeplin/bip32utils
+- lib (sub dir)
+```
+virtualenv -p python3 venv3
+source venv3/bin/activate
+python "pg to run"
+```
+
 
 ### How to
 - use keepkey-for-mn.py to gen a list of address (change key path = mpath)
