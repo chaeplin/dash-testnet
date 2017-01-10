@@ -39,3 +39,8 @@ python "pg to run"
 - change config of mnb_keepkey.py(rpc, mpath, mn list, line 87)
 - run Dash-QT or dashd
 - run mnb_keepkey.py
+
+
+### Use remote dashd
+- ssh tunnel
+- ssh -L 19998:localhost:19998 -N username@192.168.10.10 (-N(keep tunnel, not loggn in) -L local_port:dest_ip:dest_port )
