@@ -90,7 +90,6 @@ def rpcgetinfo():
             streamer.flush()
 
     except:
-        twitter.update_status(status='test02 dash has prob')
         pass
 
 
