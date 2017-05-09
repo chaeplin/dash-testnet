@@ -1,4 +1,4 @@
-a proposal generator fot Dash testnet
+a proposal generator for Dash testnet
 =======================
 
 - a random proposal : 1.2 tDash / 10 times
