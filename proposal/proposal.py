@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
 import sys, os
@@ -8,6 +8,14 @@ import time
 
 from decimal import Decimal
 from bitcoinrpc.authproxy import AuthServiceProxy, JSONRPCException
+
+# python2.7
+# sudo apt install python-pip
+# sudo pip install python-bitcoinrpc simplejson
+
+# python3
+# sudo apt install python3-pip
+# sudo pip3 install python-bitcoinrpc simplejson
 
 #
 def now():
@@ -132,8 +140,8 @@ def serialise(dikt):
 #--------------------------------------------
 # --- change 
 # rpc // testnet
-rpcuser     = 'xxx'
-rpcpassword = 'xxxxx'
+rpcuser     = 'xxxx'
+rpcpassword = 'xxxx'
 payout_address = 'xxxxx'
 payout_amount = 1.2
 payout_month = 10
@@ -202,7 +210,7 @@ print()
 
 while(int(get_rawtxid(txid)) < 6):
     print('wating 6 confirmations')
-    time.sleep(60)
+    time.sleep(10)
 
 #
 phash = get_submit(unixpreparetime, hexdata, txid)
@@ -214,4 +222,3 @@ vresult = get_vote(phash)
 print("Vote yes: done")
 #
 #
-
