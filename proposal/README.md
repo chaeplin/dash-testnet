@@ -1,5 +1,5 @@
 a proposal generator for Dash testnet
 =======================
 
-- a random proposal : 1.2 tDash / 10 times
-- proposa prepare(making a hex data, preparing, waiting 6 confirmations, submitting, voting)
+- a random proposal generation with 1.2 tDash / 10 times
+- proposal prepare(making a hex data, a fee tx), waiting 6 confirmations, submitting, voting)
