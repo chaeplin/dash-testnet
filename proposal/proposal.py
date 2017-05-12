@@ -125,6 +125,19 @@ def get_rawtxid(txid):
         print(e.args)
         sys.exit()
 
+def get_getnewaddress():
+    try:
+        r = access.getnewaddress()
+        return r
+
+    except JSONRPCException as e:
+        print(e.args)
+        sys.exit()
+
+    except Exception as e:
+        print(e.args)
+        sys.exit()
+
 
 # https://github.com/dashpay/sentinel/blob/master/lib/dashlib.py#L226-L236
 def deserialise(hexdata):
@@ -141,10 +154,10 @@ def serialise(dikt):
 # --- change 
 # rpc // testnet
 rpcuser     = 'xxxx'
-rpcpassword = 'xxxx'
-payout_address = 'xxxxx'
-payout_amount = 1.2
-payout_month = 10
+rpcpassword = 'xx--xxx='
+#payout_address = 'ya8qoYPZux6u8S5ejTxy3VX4yAavK5JnLz'
+payout_amount = 0.2
+payout_month = 50
 
 ###
 rpcbindip   = '127.0.0.1'
@@ -161,6 +174,7 @@ while(not checksynced()):
 govinfo  = get_governance()
 curblock = get_getblockcount() 
 curunixtime = now()
+payout_address = get_getnewaddress()
 
 proposalfee = govinfo.get('proposalfee')
 superblockcycle = govinfo.get('superblockcycle')
@@ -171,9 +185,9 @@ if nextsuperblock - curblock > 10:
     start_epoch = curunixtime
 
 else:
-    start_epoch = int(curunixtime + (superblockcycle * 2.6))
+    start_epoch = int(curunixtime + (superblockcycle * 2.6 * 60))
 
-end_epoch = int(start_epoch + payout_month * (superblockcycle * 2.6) + (superblockcycle/2 * 2.6) )
+end_epoch = int(start_epoch + payout_month * (superblockcycle * 2.6 * 60) + ((superblockcycle/2) * 2.6 * 60) )
 
 
 proposal = [[
@@ -190,23 +204,23 @@ proposal = [[
 ]]
 
 print("proposal : ", proposal )
-print()
+print("")
 
 json = simplejson.dumps(proposal, separators=(',', ':'), sort_keys=True, use_decimal=True)
 hexdata = binascii.hexlify(json.encode('utf-8')).decode('utf-8')
 
 print("json : ", json)
-print()
+print("")
 
 print("hexdata : ", hexdata)
-print()
+print("")
 
 #
 unixpreparetime = now()
 txid = get_prepare(unixpreparetime, hexdata)
 #
 print("txid : ", txid)
-print()
+print("")
 
 while(int(get_rawtxid(txid)) < 6):
     print('wating 6 confirmations')
@@ -215,7 +229,7 @@ while(int(get_rawtxid(txid)) < 6):
 #
 phash = get_submit(unixpreparetime, hexdata, txid)
 print("proposalhash : ", phash)
-print()
+print("")
 #
 #
 vresult = get_vote(phash)
