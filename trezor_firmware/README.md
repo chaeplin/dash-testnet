@@ -1,3 +1,5 @@
+**Note**: If you are using Fedora then also install `arm-none-eabi-newlib` in order for the compilation to work. Otherwise the installation below should be the same.
+
 ```
 !
 apt-get update
