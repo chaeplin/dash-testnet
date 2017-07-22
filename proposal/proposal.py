@@ -194,7 +194,7 @@ proposal = [[
     "proposal",
     {
         "end_epoch": str(end_epoch),
-        "name": "test_proposal_" + str(start_epoch),
+        "name": "test_proposal_abcdefghijklmnopqrstuvwxyz0123456789_" + str(start_epoch),
         "payment_address": payout_address,
         "payment_amount": str(payout_amount),
         "start_epoch": str(start_epoch),
