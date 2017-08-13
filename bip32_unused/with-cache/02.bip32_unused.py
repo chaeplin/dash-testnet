@@ -49,8 +49,11 @@ def getaddressdeltas(address):
         sys.exit()
 
 #
-BIP32_EXTENDED_KEY = input("Please enter BIP32 Extended Public Key: ")
-
+if len(sys.argv) == 1:
+    BIP32_EXTENDED_KEY = input("Please enter BIP32 Extended Public Key: ")
+else:
+    BIP32_EXTENDED_KEY = sys.argv[1]
+    
 if not BIP32_EXTENDED_KEY.startswith('tpub'):
     sys.exit("\n\t===> not bip32 ext pub key for testnet\n")
 
