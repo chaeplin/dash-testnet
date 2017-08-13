@@ -30,15 +30,22 @@ def get_bip32_addrs(xpub):
         i = i + 1
 
 
-max_child_index = 10000
+max_child_index = 15000
 
-BIP32_EXTENDED_KEY = input("Please enter BIP32 Extended Public Key: ")
+try:
+    if len(sys.argv) == 1:
+        BIP32_EXTENDED_KEY = input("Please enter BIP32 Extended Public Key: ")
+    else:
+        BIP32_EXTENDED_KEY = sys.argv[1]
+
+except:
+    sys.exit()
 
 if not BIP32_EXTENDED_KEY.startswith('tpub'):
     sys.exit("\n\t===> not bip32 ext pub key for testnet\n")
 
 try:
-    bip32_getaddress(BIP32_EXTENDED_KEY, 1)
+    first_addr = bip32_getaddress(BIP32_EXTENDED_KEY, 0)
 
 except:
     print("\n\t===> invalid bip32 ext pub key for testnet\n")
@@ -52,21 +59,43 @@ addrsfile = os.path.join(addrsdir, BIP32_EXTENDED_KEY)
 if not os.path.exists(addrsdir):
     os.mkdir(addrsdir)
 
-bip32addrs = {}
+FILE_EXIST = False
+FILE_LEN   = 0
+alladdrs   = {}
+
+if os.path.exists(addrsfile):
+    try:
+        with open(addrsfile) as data_file:
+            alladdrs = json.load(data_file)
+
+    except:
+        print("\n\t===> invalid addr file\n")
+        sys.exit()
+
+    first_addr_in_file = alladdrs.get('0', None)
+
+    if first_addr_in_file == first_addr:
+        FILE_EXIST = True 
+        FILE_LEN   = len(alladdrs)
+
+if max_child_index < FILE_LEN:
+    print("\n\t===> max_child_index : %d less than current index %d\n" % (max_child_index, FILE_LEN))
+    sys.exit() 
 
 try:
-    bip32_tpub = get_bip32_addrs(BIP32_EXTENDED_KEY)
     bar = Bar('Processing', max=max_child_index)
     for i in range(max_child_index):
-        bip32_index, bip32_address = bip32_tpub.__next__()
-        bip32addrs[bip32_index] = bip32_address
+        addr_exist = alladdrs.get(str(i), None)
+        if addr_exist == None:
+            new_addr = bip32_getaddress(BIP32_EXTENDED_KEY, i)
+            alladdrs[i] = new_addr 
 
         bar.next()
 
     bar.finish()
 
     with open(addrsfile, 'w') as outfile:
-        json.dump(bip32addrs, outfile)
+        json.dump(alladdrs, outfile)
 
     stop = time.time()
 
@@ -74,3 +103,4 @@ try:
 
 except KeyboardInterrupt:
     sys.exit()
+
