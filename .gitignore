@@ -2,3 +2,5 @@
 .DS_Store
 
 *.pyc
+
+scripts/zmqdecode.py
