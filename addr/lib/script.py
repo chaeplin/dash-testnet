@@ -19,7 +19,9 @@ def script_to_addr(script_hex):
             script_bin = bytes.fromhex(script_hex[1])
         elif len(script_hex) == 1:
             return 'pay_to_pubkey'
-    
+        elif len(script_hex) > 2:
+            return 'pay_to_scripthash'
+
     else:
         #script_bin = binascii.unhexlify(script_hex)
         script_bin = bytes.fromhex(script_hex)
@@ -93,6 +95,17 @@ def script_to_addr(script_hex):
     elif (_bord(script_bin[0]) == OP_RETURN):
         return 'nulldata'
 
+    # scriptHash
+
+    elif (len(script_bin) == 23
+            and _bord(script_bin[0]) == OP_HASH160
+            and _bord(script_bin[22]) == OP_EQUAL):
+        
+        data = script_bin[2:22]
+        vs = _bchr(script_prefix) + data
+        check = double_sha256(vs)[0:4]
+        return b58encode(vs + check)
+        
     else:
         return 'invalid'
 

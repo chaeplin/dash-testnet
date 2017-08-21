@@ -134,6 +134,14 @@ def decoderawtx(rawtx):
                     "hashin":   hashn + '-' + str(x.get('outpoint')['index']),
                     "addrfrom": addrn
                 }
+
+            elif (addrn == 'pay_to_scripthash'):
+                addrcheck['pubkey'] = {
+                    "hashin": hashn + '-' + str(x.get('outpoint')['index']),
+                    "addrfrom": 'pay_to_scripthash'
+                }
+                addrfromall.append('pay_to_scripthash')
+                                
         else:
             addrcheck['coinbase'] = {
                     "hashin":   '0000000000000000000000000000000000000000000000000000000000000000' + '-' + str(0),
