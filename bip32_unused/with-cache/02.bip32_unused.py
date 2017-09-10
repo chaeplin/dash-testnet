@@ -65,7 +65,7 @@ except:
     sys.exit()
 
 start = time.time()
-max_unused_key  = 30
+max_unused_key  = 20
 
 addrsdir  = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'addrs')
 addrsfile = os.path.join(addrsdir, BIP32_EXTENDED_KEY)
@@ -80,6 +80,7 @@ rpcpassword     = 'xxxx'
 rpcbindip       = '127.0.0.1'
 rpcport         = 19998
 
+#
 #
 serverURL = 'http://' + rpcuser + ':' + rpcpassword + '@' + rpcbindip + ':' + str(rpcport)
 access = AuthServiceProxy(serverURL)
@@ -111,25 +112,26 @@ for m in sublist:
         txaddr = y.get('address')
         txcnt[txaddr] = txcnt[txaddr] + 1
 
-z = 0
-m = 0
+n = 0
 for i in range(len(alladdrs)):
     testaddr = alladdrs[str(i)]
     if txcnt[testaddr] == 0:
-        m = m + 1
-        z = z + 1
-        print('%d\t\t%d\t%s\t%s' % (i, m, testaddr, validateaddress(testaddr)))
+        n = n + 1
+        print('%d\t\t%d\t%s\t%s' % (i, n, testaddr, validateaddress(testaddr)))
 
-        if z > max_unused_key:
+        if n > max_unused_key:
            stop = time.time()
            print('\ntook %f sec' % (stop - start))
+           print('\n\n')
            sys.exit()        
 
-#
     else:
-        if m > 0:
-            m = 0
-            print('-----------')
-            print('%d\t\t%d\t%s\t%s' % (i, m, testaddr, validateaddress(testaddr)))
-        else:
-            m = 0
+        if n > 0:
+            print('-----------------')
+        
+        n = 0
+
+#    if txcnt[testaddr] > 2:
+#        print('--->\t%d\t\t%s\t%s\t%d' % (i, testaddr, validateaddress(testaddr), txcnt[testaddr]))
+#    elif txcnt[testaddr] == 1:
+#        print('--->\t%d\t\t%s\t%s\t%d' % (i, testaddr, validateaddress(testaddr), txcnt[testaddr]))
