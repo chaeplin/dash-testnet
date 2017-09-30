@@ -10,16 +10,19 @@ from bitcoinrpc.authproxy import AuthServiceProxy, JSONRPCException
 
 # --- change 
 # rpc
-rpcuser     = 'x'    # change
-rpcpassword = 'x--x=' # change
+rpcuser     = 'xxx'
+rpcpassword = 'xxx--xxx'
 rpcbindip   = '127.0.0.1'
 rpcport     = 19998
 
-addr1 = 'yW9HT4Qq8dsc2Z1gJNcDrLdZJgjdFnxm9R'
-addr2 = 'yNAa3P6TU6HdCf3afBgWPJgcr5ALkAR6FE'
-addr3 = 'yd9QugGWmNE4Yn5mqaPPEepQnzkKtuJ64i'
+addr1 = 'yhjookC8oZZNtFC3CT8Er1fxLyp7K2o2j5'
+addr2 = 'yUeEdMNHFAAkWwHQLLjh44AkUb8gNkq7as'
+addr3 = 'yefBFeLyVi4BiLRiashyg4Si7vFo8E4Zvw'
+addr4 = 'yiea7RVP8ZWvABkGV9eecKGU91v15qVVPG'
+addr5 = 'yTokd3SW1QjBVNdgaQ3geoNZHt33zSK2o2'
+addr6 = 'yQfxebZZUJxxcN6tawL9vz9eTTNAsrkSdA'
 
-splitto = 3
+splitto = 6
 fee     = 10000
 
 def get_listunspent():
@@ -47,16 +50,18 @@ access = AuthServiceProxy(serverURL)
 
 try:
     while True:
+        print(time.time())
         unspent = get_listunspent()
+        print(time.time())
         for x in unspent:
             spendable = x.get('spendable')
             amount    = x.get('amount') 
             txid      = x.get('txid')
             vout      = x.get('vout')
             outamount = amount - round(Decimal(fee / 1e8), 8)
-            outeach   = round(outamount / 3, 8)
+            outeach   = round(outamount / splitto, 8)
 
-            if spendable and amount > 1:
+            if spendable and amount > 0.3:
                 input_ = {
                             "txid": txid,
                             "vout": vout
@@ -65,7 +70,10 @@ try:
                 output_ = {
                             addr1: outeach,
                             addr2: outeach,
-                            addr3: outeach
+                            addr3: outeach,
+                            addr4: outeach,
+                            addr5: outeach,
+                            addr6: outeach
                         }
 
                 rawtx = createrawtransaction(input_, output_)
@@ -77,9 +85,9 @@ try:
 
                     #sys.exit()
 
-                time.sleep(0.3)
+                time.sleep(0.01)
 
-        time.sleep(10)
+        time.sleep(2)
 
 except Exception as e:
     print(e.args[0])
@@ -87,4 +95,3 @@ except Exception as e:
 
 except KeyboardInterrupt:
     sys.exit()
-
