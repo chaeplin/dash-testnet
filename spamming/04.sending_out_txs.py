@@ -15,10 +15,32 @@ from bitcoinrpc.authproxy import AuthServiceProxy, JSONRPCException
 from progress.bar import Bar
 
 def get_tx(txs):
+    first_unused = False
+    checking_gap = 10
     i = 0
     while True:
-        yield i, txs[str(i)]
-        i = i + 1
+        rawtx = txs[str(i)]
+        txid = format_hash(double_sha256(binascii.unhexlify(rawtx)))
+        is_in_block = getrawtransaction(txid)
+        if not is_in_block:
+            if first_unused:
+                yield i, txs[str(i)]
+
+            else:
+                first_unused = True
+
+                if i == 0:
+                    yield i, txs[str(i)]
+
+                else:
+                    i = i - checking_gap             
+
+        if first_unused:
+            i = i + 1
+
+        else:       
+            i = i + checking_gap
+
         if i >= total_no_of_txs:
             raise ValueError('max tx n reached')
 
@@ -51,18 +73,16 @@ def double_sha256(data):
 # --- change 
 # rpc
 rpcuser     = 'xxxx'
-rpcpassword = 'xxxx--xxxx'
+rpcpassword = 'xxxxx--xxxx'
 rpcbindip   = '127.0.0.1'
 rpcport     = 19998
 
 BIP32_EXTENDED_KEY_TO = 'tpubDF14hq81zXCcJnCvFfXzCPbxKWatfBcNfBRLWhbXRfymdJ6uUioTPQJdCsRxXUXu6bU6nLgoAhNvbYGKZP1HjXctqLixBdz5ZBMvrPhp2aN'
 
 time_to_sleep = 0.001
-DEFAULT_TXS_TO_SEND = 100
-
-
-SEND_IS = False
-
+SEND_IS = True
+#SEND_IS = False
+DEFAULT_TXS_TO_SEND = 10
 
 try:
     if len(sys.argv) == 1:
@@ -100,7 +120,8 @@ try:
 except:
     sys.exit("\n\t===> invalid my addr file\n")
 
-print('txs length ===>  ', len(all_my_txs))
+print('took %f sec' % (time.time() - start))
+print('txs length ===> ', len(all_my_txs))
 print('will send  ===>', number_tx_to_send)
 
 txs_to_send = get_tx(all_my_txs)
@@ -111,20 +132,17 @@ try:
     i = 0
     while True:
         signedtx_seq, signedtx = txs_to_send.__next__()
-        txid = format_hash(double_sha256(binascii.unhexlify(signedtx)))
-        is_in_block = getrawtransaction(txid)
-        if not is_in_block:
-            if SEND_IS:
-                s = sendrawtransaction_is(signedtx)
+        if SEND_IS:
+            s = sendrawtransaction_is(signedtx)
 
-            else:
-                s = sendrawtransaction(signedtx)
+        else:
+            s = sendrawtransaction(signedtx)
 
-            bar.next()
+        bar.next()
 
-            i = i + 1
-            if i >= number_tx_to_send:
-                break
+        i = i + 1
+        if i >= number_tx_to_send:
+            break
        
         time.sleep(time_to_sleep)
 
