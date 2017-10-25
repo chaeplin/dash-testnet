@@ -14,27 +14,12 @@ from bitcoinrpc.authproxy import AuthServiceProxy, JSONRPCException
 #pip3 install git+https://github.com/verigak/progress
 from progress.bar import Bar
 
-# --- change 
-# rpc
-rpcuser     = 'xxx'
-rpcpassword = 'xxxxxx'
-rpcbindip   = '127.0.0.1'
-rpcport     = 19998
-
-BIP32_EXTENDED_KEY_TO = 'tpubDFnBaeiK1ZUB2Qo9TmAvT5HM7QSc7oZGc6cc2sZFP3DP58YAU3fzXP4XPF2q9Ebjtq88QDR76ThUA7DDZK1VPd8h6ZnS78HszBiwMCpMpKp'
-
-start_number = 40010
-number_tx_to_send = 120000
-time_to_sleep = 0.001
-
-SEND_IS = False
-
-def get_tx(txs, tx_start_number):
-    ii = tx_start_number
+def get_tx(txs):
+    i = 0
     while True:
-        yield txs[str(ii)]
-        ii = ii + 1
-        if ii >= len(txs):
+        yield i, txs[str(i)]
+        i = i + 1
+        if i >= total_no_of_txs:
             raise ValueError('max tx n reached')
 
 def sendrawtransaction(hex_):
@@ -62,7 +47,35 @@ def format_hash(hash_):
 def double_sha256(data):
     return hashlib.sha256(hashlib.sha256(data).digest()).digest()
 
-###
+
+# --- change 
+# rpc
+rpcuser     = 'xxxx'
+rpcpassword = 'xxxx--xxxx'
+rpcbindip   = '127.0.0.1'
+rpcport     = 19998
+
+BIP32_EXTENDED_KEY_TO = 'tpubDF14hq81zXCcJnCvFfXzCPbxKWatfBcNfBRLWhbXRfymdJ6uUioTPQJdCsRxXUXu6bU6nLgoAhNvbYGKZP1HjXctqLixBdz5ZBMvrPhp2aN'
+
+time_to_sleep = 0.001
+DEFAULT_TXS_TO_SEND = 100
+
+
+SEND_IS = False
+
+
+try:
+    if len(sys.argv) == 1:
+        number_tx_to_send = DEFAULT_TXS_TO_SEND
+    else:
+        number_tx_to_send = int(sys.argv[1])
+
+except Exception as e:
+    print(e.args)
+    sys.exit()
+
+#
+
 start = time.time()
 
 serverURL = 'http://' + rpcuser + ':' + rpcpassword + '@' + rpcbindip + ':' + str(rpcport)
@@ -88,19 +101,16 @@ except:
     sys.exit("\n\t===> invalid my addr file\n")
 
 print('txs length ===>  ', len(all_my_txs))
+print('will send  ===>', number_tx_to_send)
 
-if start_number >= len(all_my_txs):
-    sys.exit('no more txs available')
-
-
-txs_to_send = get_tx(all_my_txs, start_number)
-i = start_number
-f = open(logs_to_file, 'a')
+txs_to_send = get_tx(all_my_txs)
+total_no_of_txs = len(all_my_txs)
 bar = Bar('Processing', max=number_tx_to_send)
 
 try:
+    i = 0
     while True:
-        signedtx = txs_to_send.__next__()
+        signedtx_seq, signedtx = txs_to_send.__next__()
         txid = format_hash(double_sha256(binascii.unhexlify(signedtx)))
         is_in_block = getrawtransaction(txid)
         if not is_in_block:
@@ -110,32 +120,24 @@ try:
             else:
                 s = sendrawtransaction(signedtx)
 
-            ts = time.strftime('%Y-%m-%d-%H:%M:%S', time.gmtime(now()))
-            if SEND_IS:
-                f.write(ts + ' ' + str(now()) + ' ' + s + '\n')
-                f.flush()
+            bar.next()
 
-        bar.next()
-        i = i + 1
+            i = i + 1
+            if i >= number_tx_to_send:
+                break
        
         time.sleep(time_to_sleep)
- 
-        if i >= number_tx_to_send + start_number:
-            break
 
     bar.finish()
     stop = time.time()
-    f.close()
-    print('\n\t ==> took %f sec' % (stop - start))
+    print('\n\t ==> %d txs remained' % (total_no_of_txs - signedtx_seq))
+    print('\t ==> took %f sec' % (stop - start))
 
 except Exception as e:
     print('\n')
     print(e.args)
-    f.close()
     sys.exit()
 
 except KeyboardInterrupt:
-    f.close()
     sys.exit()
-
 
