@@ -9,13 +9,8 @@ import time
 from decimal import Decimal
 from bitcoinrpc.authproxy import AuthServiceProxy, JSONRPCException
 
-# python2.7
 # sudo apt install python-pip
 # sudo pip install python-bitcoinrpc simplejson
-
-# python3
-# sudo apt install python3-pip
-# sudo pip3 install python-bitcoinrpc simplejson
 
 #
 def now():
@@ -118,12 +113,10 @@ def get_rawtxid(txid):
 
 
     except JSONRPCException as e:
-        print(e.args)
-        sys.exit()
+        return 0
 
     except Exception as e:
-        print(e.args)
-        sys.exit()
+        return 0
 
 def get_getnewaddress():
     try:
@@ -189,25 +182,32 @@ else:
 
 end_epoch = int(start_epoch + payout_month * (superblockcycle * 2.6 * 60) + ((superblockcycle/2) * 2.6 * 60) )
 
+proposal_name = "-_abcdefghijklmnopqrstuvwxyz0123456789" + str(start_epoch)
+proposal_url  = "https://www.dashcentral.org/p/" + "test_proposal_" + str(start_epoch)
 
-proposal = [[
-    "proposal",
-    {
-        "end_epoch": str(end_epoch),
-        "name": "test_proposal_abcdefghijklmnopqrstuvwxyz0123456789_" + str(start_epoch),
-        "payment_address": payout_address,
-        "payment_amount": str(payout_amount),
-        "start_epoch": str(start_epoch),
-        "type": 1,
-        "url": "https://www.dashcentral.org/p/" + "test_proposal_" + str(start_epoch)
-    }
-]]
+proposal_len = len(proposal_name)
+proposal_name = proposal_name[proposal_len - 40:proposal_len]
+print(len(proposal_name), proposal_name)
+
+proposal = [[ 
+    "proposal", { 
+        "end_epoch":str(end_epoch), 
+        "name":str(proposal_name), 
+        "payment_address":str(payout_address), 
+        "payment_amount":str(payout_amount), 
+        "start_epoch":str(start_epoch), 
+        "type":1, 
+        "url":str(proposal_url) 
+} ]] 
 
 print("proposal : ", proposal )
 print("")
 
 json = simplejson.dumps(proposal, separators=(',', ':'), sort_keys=True, use_decimal=True)
-hexdata = binascii.hexlify(json.encode('utf-8')).decode('utf-8')
+#hexdata = binascii.hexlify(json.encode('utf-8')).decode('utf-8')
+hexdata = json.encode('hex')
+
+#hexdata = binascii.hexlify(proposal.encode('utf-8')).decode('utf-8')
 
 print("json : ", json)
 print("")
@@ -222,9 +222,11 @@ txid = get_prepare(unixpreparetime, hexdata)
 print("txid : ", txid)
 print("")
 
+nn = 0
 while(int(get_rawtxid(txid)) < 6):
-    print('wating 6 confirmations')
-    time.sleep(10)
+    print('wating 6 confirmations', nn)
+    time.sleep(5)
+    nn = nn + 1
 
 #
 phash = get_submit(unixpreparetime, hexdata, txid)
