@@ -21,12 +21,14 @@ rpcbindip   = '127.0.0.1'
 rpcport     = 19998
 
 fee     = 100000
-toquery = 1000
+toquery = 100
 
-numberofinputs = 2
+numberofinputs = 3
 
-BIP32_EXTENDED_KEY_MY = 'tpubDFWu1Np5EN31CfJzgCxxuQiBmfPDfzcMUyHpEozYzh4RUKjiv8sEN7uB5PgdEFocX41FkHe9idoJ8f6uhtWqFKkxop2FCN2ywPycuAASdFv'
-BIP32_EXTENDED_KEY_TO = 'tpubDFnBaeiK1ZUB2Qo9TmAvT5HM7QSc7oZGc6cc2sZFP3DP58YAU3fzXP4XPF2q9Ebjtq88QDR76ThUA7DDZK1VPd8h6ZnS78HszBiwMCpMpKp'
+
+BIP32_EXTENDED_KEY_MY = 'tpubDF14hq81zXCcJnCvFfXzCPbxKWatfBcNfBRLWhbXRfymdJ6uUioTPQJdCsRxXUXu6bU6nLgoAhNvbYGKZP1HjXctqLixBdz5ZBMvrPhp2aN'
+BIP32_EXTENDED_KEY_TO = 'tpubDEE1eWLKMRzDdUkscT1VQb7pZ1PCS9pKi3f7ZoCNWzZgeoKaxPLXPW7aQ6Zdwg4nranvvmhhjVZRxxMufNHp1APNT3BaXHYMeG358aym1Qk'
+
 
 def get_to_addrs(tol):
     ii = 0
@@ -37,34 +39,55 @@ def get_to_addrs(tol):
             ii = 0
 
 def get_listunspent():
-    r = access.listunspent()
-    return r
+    try:
+        r = access.listunspent()
+        return r
+    except:
+        return None
 
 def get_listunspentaddr(addr):
-    r = access.listunspent(6, 9999999, addr)
-    return r
+    try:
+        r = access.listunspent(6, 9999999, addr)
+        return r
+    except:
+        return None
 
 def sendtoaddress(a):
-    r = access.sendtoaddress(my_addr, a, '', '', True)
-    print (r)
+    try:
+        r = access.sendtoaddress(my_addr, a, '', '', True)
+        print (r)
+    except:
+        return None
 
 def createrawtransaction(in_, out_):
-    r = access.createrawtransaction(in_, out_)
-    return r
+    try:
+        r = access.createrawtransaction(in_, out_)
+        return r
+    except:
+        return None
 
 def signrawtransaction(hex_):
-    r = access.signrawtransaction(hex_)
-    return r
+    try:
+        r = access.signrawtransaction(hex_)
+        return r
+    except:
+        return None
 
 def sendrawtransaction(hex_):
-    r = access.sendrawtransaction(hex_)
-    return r
+    try:
+        r = access.sendrawtransaction(hex_)
+        return r
+    except:
+        return None
 
 def sendrawtransaction_is(hex_):
-    r = access.sendrawtransaction(hex_, True, True)
-    return r
+    try:
+        r = access.sendrawtransaction(hex_, True, True)
+        return r
+    except:
+        return None
 
-
+#-------------------
 start = time.time()
 
 serverURL = 'http://' + rpcuser + ':' + rpcpassword + '@' + rpcbindip + ':' + str(rpcport)
@@ -106,7 +129,6 @@ bip32_to_addrs = get_to_addrs(all_to_addrs)
 alltxs = {}
 signedtx_hex_cnt = 0
 
-
 try:
     unspent =[]
     print('get unspentlist')
@@ -115,9 +137,15 @@ try:
     #sublist = [my_addridx[ix:ix + toquery] for ix in range(0, len(my_addridx), toquery)]
     for m in sublist:
         qstart = time.time()
-        eachunspent = get_listunspentaddr(m)
-        unspent = unspent + eachunspent
-        
+        while True:
+            eachunspent = get_listunspentaddr(m)
+            if eachunspent != None:
+                unspent = unspent + eachunspent
+                break
+            else:
+                print('----')
+                time.sleep(3)        
+
         i = i + len(m)
         print('{:5d} {:5d} {:5d} {}'.format(i, len(eachunspent), len(unspent), time.time() - qstart))
 
@@ -159,14 +187,23 @@ try:
                   addr3: outeach
         }
 
-        rawtx = createrawtransaction(inputs, outputs)
-        signedtx = signrawtransaction(rawtx)
-        if signedtx.get('complete') == True:
-            signedtx_hex = signedtx.get('hex')
-            alltxs[signedtx_hex_cnt] = signedtx_hex
-            signedtx_hex_cnt = signedtx_hex_cnt + 1
+        while True:
+            rawtx = createrawtransaction(inputs, outputs)
+            if rawtx != None:
+                break
+            else:
+                time.sleep(3)
 
-        bar.next()
+        while True:
+            signedtx = signrawtransaction(rawtx)
+            if signedtx != None:
+                if signedtx.get('complete') == True:
+                    signedtx_hex = signedtx.get('hex')
+                    alltxs[signedtx_hex_cnt] = signedtx_hex
+                    signedtx_hex_cnt = signedtx_hex_cnt + 1
+                    bar.next()
+            else:
+                time.sleep(3)
 
     bar.finish()
     stop = time.time()
@@ -183,5 +220,4 @@ except Exception as e:
 
 except KeyboardInterrupt:
     sys.exit()
-
 
