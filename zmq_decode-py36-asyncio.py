@@ -678,13 +678,15 @@ class ZMQHandler():
             txno = len(x['txs'])
             binfo = rpcgetblock(x['hash'])
             binfo_time = binfo.get('time')
+            blockcount = binfo.get('height')
             curtime = now()
             
-            block_no_colorized = hues.huestr(str(blockcount + 1)).green.bold.colorized
+            block_no_colorized = hues.huestr(str(blockcount)).green.bold.colorized
+#            block_no_colorized = hues.huestr(str(blockcount + 1)).green.bold.colorized            
             block_time_colorized = hues.huestr(str(curtime - lastblcokzmq)).red.colorized
             print('{} {} {} {:3d} {:3d} {:5}'.format(ts, block_no_colorized, x['hash'], txno, curtime - binfo_time, block_time_colorized))
 
-            blockcount = blockcount + 1
+            #blockcount = blockcount + 1
             lastblcokzmq = curtime
 
         asyncio.ensure_future(self.handle())
